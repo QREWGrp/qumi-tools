@@ -1,0 +1,35 @@
+{
+  "interface": {
+    "capabilities": [],
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Run IONOS bridge status and discover the entire set of available IONOS Hosting MCP tools.",
+      "Audit domains, DNS records, certificates, hosting and forwarding setup using authorized IONOS tools.",
+      "Prepare a Cloudflare DNS cutover plan and request separate approval before changing records."
+    ],
+    "developerName": "Mohammed Mansour",
+    "displayName": "QUMI IONOS Bridge",
+    "longDescription": "QUMI IONOS Bridge for Qumi Teknolojis, trading name of QROO Inc. Provides live discovery and execution of ALL IONOS Hosting MCP tools through dynamic MCP tools/list and tools/call instead of hardcoded operations. Includes domains, DNS, SSL, webhosting, WordPress, VPS, dedicated hosting and account/billing as exposed by IONOS to each authenticated account. Optional second upstream provider supports Cloudflare MCP tools; website analytics and redirects are available only when exposed by the connected provider. Each agent configures its own official HTTPS MCP endpoint and Personal Access Token with out-of-band masked credential entry or secret manager, never through chat or repository. Read-only access defaults to immediate execution; mutating calls require an exact, one-time operator approval. Cross-platform Node.js 20+ MCP stdio transport for Codex, Claude Code, Replit and other MCP hosts. A ChatGPT web connection requires a separately hosted, authenticated MCP service.",
+    "shortDescription": "IONOS hosting MCP for agents",
+    "websiteURL": "https://qumi.app"
+  },
+  "name": "qumi-ionos-bridge",
+  "version": "0.1.0",
+  "description": "QUMI's portable IONOS Hosting MCP gateway: dynamic discovery of every upstream tool, safe per-agent PAT provisioning, read-only default, approved mutations and optional Cloudflare MCP federation.",
+  "author": {
+    "name": "Mohammed Mansour",
+    "email": "mohammed@qr-oo.com"
+  },
+  "keywords": [
+    "ionos",
+    "hosting",
+    "domains",
+    "dns",
+    "mcp",
+    "cloudflare",
+    "qumi",
+    "engineering"
+  ],
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json"
+}

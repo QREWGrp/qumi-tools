@@ -43,6 +43,12 @@ For Git access provision `DEPOT_GIT_KEY` separately. A per-user encrypted vault 
 
 Never paste secrets into chat, issue comments, PRs, MCP arguments, logs, or files in this public repository.
 
+## QUMI IONOS Bridge (new)
+
+A second marketplace plugin, [QUMI IONOS Bridge](plugins/qumi-ionos-bridge/README.md), dynamically discovers the full official **IONOS Hosting MCP** tool catalog. Agents can inspect and execute authorized tools for domains, DNS, SSL, webhosting, VPS, dedicated hosting and BSS; additional tools appear automatically as upstream MCP capabilities change. Optional Cloudflare MCP forwarding uses separate per-user credentials. Mutable operations require independent one-time operator approval.
+
+No provider PAT, client domain, account, or personal MCP server URL is committed. See [the operator setup instructions](plugins/qumi-ionos-bridge/README.md).
+
 ## Status and licensing
 
 Source-level tests have passed in local and simulated environments. GitHub repository publication does not establish authenticated Depot access or hosted MCP service availability. This repository retains its existing [MIT license](LICENSE) and its copyright notice.

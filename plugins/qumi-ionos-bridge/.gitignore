@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.vault.json
+.qumi-tools/
+credentials.json
+secrets.json
+*.log
