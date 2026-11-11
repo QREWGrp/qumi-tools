@@ -1,4 +1,4 @@
-# QUMI IONOS Bridge v0.1.0
+# QUMI IONOS Bridge v0.1.1
 
 **Publisher:** Qumi Teknolojis (trading name of QROO Inc.) · **Developer:** Mohammed Mansour  
 **Sites:** https://qumi.app · https://qr-oo.com · **Support:** support@qr-oo.com  
@@ -15,22 +15,23 @@ The IONOS Hosting MCP catalog currently covers Domains, DNS, SSL, Webhosting, Co
 **Prerequisite:** Node.js 20+; the agent client must be allowed to run a local MCP stdio process and reach the IONOS-hosted HTTPS MCP server over the network.
 
 1. Sign in to the official [IONOS Hosting MCP portal](https://developer.hosting.ionos.com/mcp) and create a **Personal Access Token** with the minimum required tools/scopes. Copy the official hosted MCP URL from the portal's getting-started guide. Do not guess an endpoint.
-2. Run in a trusted **interactive local terminal** (not in an agent chat):
+2. In Codex, have the agent call `ionos_credential_request`, ask you for non-secret permission, then call `ionos_secure_setup` (Windows only). This opens a native Windows question dialog with masked token entry; it saves the endpoint and token using **Windows DPAPI CurrentUser** outside the repository. The same Windows account must run the MCP server. Alternatively, open a trusted **interactive local terminal** (not in an agent chat) and use an **absolute script path** or run from the extracted plugin directory:
    ```sh
    node bin/setup.mjs ionos
    ```
-   The helper asks for the hosted HTTPS MCP URL, secret PAT (hidden input), and an encryption passphrase (hidden input). The saved AES-256-GCM vault stays in the individual user's external config directory (`~/.config/qumi-ionos-bridge/`), not in Git. Tokens are encrypted with a per-user passphrase (scrypt-derived key); their ciphertext commitment can be used for non-secret audit receipts.
-3. To allow an unattended MCP process to decrypt the vault, inject **`QUMI_IONOS_VAULT_PASSPHRASE` via your per-agent secrets manager**. Do not commit this passphrase in environment files or scripts. Alternatively inject `IONOS_MCP_URL` and `IONOS_PAT` through the agent platform's existing secure secret manager; those values are not written to disk by the bridge. Never include PATs on command lines or inside MCP JSON arguments.
+   On Windows this command launches the native masked DPAPI form; on macOS/Linux the helper asks for the hosted HTTPS MCP URL, secret PAT (hidden input), and an encryption passphrase (hidden input). The non-Windows AES-256-GCM vault stays in the individual user's external config directory (`~/.config/qumi-ionos-bridge/`), not in Git. Tokens are encrypted with a per-user passphrase (scrypt-derived key); their ciphertext commitment can be used for non-secret audit receipts.
+3. On Windows with DPAPI there is **no vault passphrase to inject**; the encrypted record is only decryptable under the same Windows user. For cross-platform AES-256-GCM vaults, to allow an unattended MCP process to decrypt the vault, inject **`QUMI_IONOS_VAULT_PASSPHRASE` via your per-agent secrets manager**. Do not commit this passphrase in environment files or scripts. Alternatively inject `IONOS_MCP_URL` and `IONOS_PAT` through the agent platform's existing secure secret manager; those values are not written to disk by the bridge. Never include PATs on command lines or inside MCP JSON arguments.
 4. Restart your agent's MCP process and call `ionos_bridge_status`, then `ionos_discover_tools`. This verifies current authorization without echoing credentials.
 
-The bridge's `ionos_credential_request` tool asks the nonsecret question **"Authorize IONOS Hosting MCP for this agent?"** and returns the secure setup instructions. It cannot force the same dialog UI in every MCP host. MCP in-band forms are **not appropriate for secret capture**; use the client's protected credential flow or local masked terminal helper.
+The bridge's `ionos_credential_request` tool asks a **nonsecret** permission question and identifies `ionos_secure_setup` as the next Windows action. The latter spawns an **OS-native masked question dialog**, not an MCP chat form. It cannot force the same UI in every MCP host. MCP in-band forms are **not appropriate for secret capture**; use the client's protected credential flow or local masked terminal helper.
 
 ## MCP tool access (full coverage, no hardcoded features)
 
-The bridge always registers five stable tools:
+The bridge always registers six stable tools:
 
 - `ionos_bridge_status` — sanitized readiness and configuration source
-- `ionos_credential_request` — nonsecret setup question
+- `ionos_credential_request` — nonsecret setup question, prompting the agent to request permission to open a local secure dialog
+- `ionos_secure_setup` — launches Windows native masked credential dialog with DPAPI CurrentUser encryption; no tokens are returned through MCP
 - `ionos_discover_tools` — all live upstream tools with search and pagination
 - `ionos_describe_tool` — exact live schema, annotations and risk
 - `ionos_invoke_tool` — passes validated arguments to any dynamically discovered upstream tool
@@ -65,3 +66,30 @@ For migration, inventory DNS records, check authoritative nameserver delegation,
 No live IONOS customer connection has been tested by the package author. New IONOS tools are discoverable if the provider publishes them on authenticated `tools/list`. REST endpoints not present in IONOS MCP are not silently fabricated. Upstream 401/403/429 errors, permissions and rate limits are surfaced to the caller without disclosing credentials.
 
 **Documentation:** [IONOS Hosting MCP](https://developer.hosting.ionos.com/mcp), [IONOS Hosting API](https://developer.hosting.ionos.com/docs).
+
+## Windows PowerShell / `MODULE_NOT_FOUND` recovery
+
+`node bin/setup.mjs ionos` is a **relative** file path. It only works when your PowerShell working directory is the plugin root. Running it from `C:\WINDOWS\system32` attempts to load a nonexistent `system32\bin\setup.mjs`; it does not mean Node.js is broken.
+
+To run from any directory, first clone the public source and call the **absolute** script path (the path can be changed to wherever Codex installed the plugin):
+
+```powershell
+$root = Join-Path $env:USERPROFILE 'QUMI\qumi-dev-tools'
+if (!(Test-Path (Join-Path $root 'plugins\qumi-ionos-bridge\bin\setup.mjs'))) {
+  git clone https://github.com/QREWGrp/qumi-dev-tools.git $root
+}
+node (Join-Path $root 'plugins\qumi-ionos-bridge\bin\setup.mjs') ionos
+```
+
+The script now opens the native Windows masked input dialog; on Linux/macOS it prompts in the local terminal. For agents with the bridge MCP already connected, call `ionos_credential_request` then (with permission) `ionos_secure_setup`; no manual script path is necessary. Windows encrypted credentials are **not portable across Windows users**. **`GIT_ASKPASS` is exclusively for Git authentication; it is not the IONOS API credential mechanism.**
+
+**Windows native UI acceptance:** implementation is reviewed and syntax-tested where possible, but must be exercised on an actual interactive Windows desktop before claiming a Windows runtime PASS. Never copy actual credentials into chat.
+
+
+## Secure question (Windows, Linux, macOS)
+
+When an agent needs a credential it calls its bridge credential-request tool. On an agent running on the operator's computer, the bridge starts a **single-use, five-minute loopback-only browser question** and returns a link. MCP clients advertising URL-mode elicitation see a native question/authorization prompt; other hosts receive the fallback link. The operator enters the credential, and their browser encrypts it with a one-time RSA-OAEP/AES-GCM envelope before submission. The bridge stores it again as AES-256-GCM ciphertext under the operator's home directory, outside Git. No key, passphrase or ciphertext is sent through MCP tool arguments, chat, stdout or a Git commit. The credential URL is valid only on the same machine hosting that agent.
+
+For remote or cloud agents whose MCP process cannot be reached at localhost from the operator's browser, use an authenticated **HTTPS credential portal** bound to the operator's identity or the platform's secret manager instead. A localhost URL cannot magically bridge to another host. MCP clients determine whether and how they render URL elicitation; the plugin cannot force a specific Codex-style question bubble. The vault passphrase is needed for later agent access and must be supplied via the user-specific secret store; entering a token does not by itself establish an authenticated provider session.
+
+The browser entry flow is optional for official third-party OAuth such as Fly MCP; for OAuth use the provider's sign-in consent dialog rather than soliciting a token.

@@ -26,3 +26,12 @@ Always prefer `fly-official` MCP tools for capabilities exposed by the live Fly 
 ## Authentication and credential rotation
 
 The Fly MCP uses **OAuth**, not a pasted secret. For CLI auth, use local `fly auth login`, platform secret injection of `FLY_API_TOKEN`, or the per-user encrypted local vault. If an operator requests credential entry in a question bubble, ask only for permission to launch the secure flow. Refer them to `node bin/credentials.mjs store` for hidden terminal entry or an approved hosted provider secret flow. Do not echo, cache in Git, upload or store plaintext in MCP outputs. To rotate, create a new provider token, update the per-user vault, verify access, revoke the old provider credential, and retain a non-secret receipt.
+
+
+## Mandatory cross-platform secure questions
+
+On missing credentials, invoke the bridge's credential question tool rather than sending the operator to a directory or asking for a token in chat.
+The tool requests **MCP URL-mode elicitation** when the client supports it, otherwise provides a short-lived localhost secure question link for the operator.
+Questions work with any Node.js 20+ agent runtime on Windows, Linux or macOS. The operator's browser encrypts each response before loopback submission; the agent stores per-user AES-256-GCM ciphertext under the home directory, outside Git, and reports only sanitized readiness.
+The secure URL is reachable only from the machine running the agent MCP process. For remote/cloud agents, ask for an approved identity-bound HTTPS portal or use a supported platform secret manager; never pretend localhost reaches a remote desktop.
+Never accept plaintext tokens, encryption passphrases, or answers to secret questions through ordinary MCP forms, tool arguments, chat, or Git. If the provider offers OAuth, prefer OAuth over token collection. Reconfirm any mutation and retain only non-secret audit commitments.

@@ -95,3 +95,12 @@ CLI commands are spawned directly **without a shell**, output is bounded and red
 - [Official flyctl releases](https://github.com/superfly/flyctl/releases)
 - [Fly CLI documentation](https://fly.io/docs/flyctl/)
 - [Fly API token authentication](https://fly.io/docs/flyctl/integrating/)
+
+
+## Secure question (Windows, Linux, macOS)
+
+When an agent needs a credential it calls its bridge credential-request tool. On an agent running on the operator's computer, the bridge starts a **single-use, five-minute loopback-only browser question** and returns a link. MCP clients advertising URL-mode elicitation see a native question/authorization prompt; other hosts receive the fallback link. The operator enters the credential, and their browser encrypts it with a one-time RSA-OAEP/AES-GCM envelope before submission. The bridge stores it again as AES-256-GCM ciphertext under the operator's home directory, outside Git. No key, passphrase or ciphertext is sent through MCP tool arguments, chat, stdout or a Git commit. The credential URL is valid only on the same machine hosting that agent.
+
+For remote or cloud agents whose MCP process cannot be reached at localhost from the operator's browser, use an authenticated **HTTPS credential portal** bound to the operator's identity or the platform's secret manager instead. A localhost URL cannot magically bridge to another host. MCP clients determine whether and how they render URL elicitation; the plugin cannot force a specific Codex-style question bubble. The vault passphrase is needed for later agent access and must be supplied via the user-specific secret store; entering a token does not by itself establish an authenticated provider session.
+
+The browser entry flow is optional for official third-party OAuth such as Fly MCP; for OAuth use the provider's sign-in consent dialog rather than soliciting a token.

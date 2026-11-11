@@ -5,6 +5,7 @@ import readline from 'node:readline';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import {execute,errSafe} from './operations.mjs';
+import {createQuestionElicitation} from './elicitation.mjs';
 
 const s=(max=128)=>({type:'string',minLength:1,maxLength:max});
 const optional=(properties={},required=[])=>({type:'object',properties,required,additionalProperties:false});
@@ -15,7 +16,7 @@ const tools=[
  ['health','Describe agent-side Depot configuration and secret availability; no tokens returned',optional()],
  ['runtime_status','Check local MCP runtime, CLI location, Depot SDK availability, and encrypted vault readiness',optional()],
  ['credentials_status','Report encrypted vault and injected credential availability, without disclosing secrets',optional()],
- ['credential_request','Ask operator to provision/rotate a credential through a secure out-of-band flow; NEVER accept plaintext in MCP',{...optional({credential:{type:'string',enum:['DEPOT_TOKEN','DEPOT_API_KEY','DEPOT_GIT_KEY']},action:{type:'string',enum:['provision','rotate']},reason:s(240)})}],
+ ['credential_request','Ask an encrypted credential question on Windows, Linux or macOS via MCP URL elicitation; never accept plaintext through MCP',{...optional({credential:{type:'string',enum:['DEPOT_TOKEN','DEPOT_API_KEY','DEPOT_GIT_KEY']},action:{type:'string',enum:['provision','rotate']},reason:s(240)})}],
  ['git_askpass_status','Inspect operator-approved Git HTTPS credential helper status',optional()],
  ['git_remote_probe','Verify exact approved GitHub remote HEAD using Git-only GIT_ASKPASS',optional()],
  ['depot_cli_detect','Detect Depot CLI in agent environment or project-local installation',optional()],
@@ -38,7 +39,7 @@ const tools=[
  ['verify_checkout','Verify exact Git SHA and clean checkout',optional({approved_sha:sha})],
  ['start_build','Start SHA-pinned approved Depot build from clean checkout',optional({approved_sha:sha,project_id:proj,context:s(300),dockerfile:s(300),tag:s(200),platform:{type:'string',enum:['linux/amd64','linux/arm64','linux/amd64,linux/arm64']}},['approved_sha'])],
  ['build_job','Retrieve bounded job status and log tail',optional({job_id:s(36),tail_lines:{type:'integer',minimum:1,maximum:120}},['job_id'])],
- ['launch_secret_setup','Legacy Windows-local operator-only encrypted dialog; remote denied',optional()]
+ ['launch_secret_setup','Compatibility alias for portable secure credential question across Windows, Linux and macOS',optional()]
 ].map(([name,description,inputSchema])=>({name,description,inputSchema}));
 const lookup=new Map(tools.map(x=>[x.name,x]));
 function validate(schema,value){
@@ -61,7 +62,7 @@ export async function handleRpc(message,{remote=false}={}){
  if(id===undefined)return null;
  const reply=(result)=>({jsonrpc:'2.0',id,result});
  try{
-  if(method==='initialize')return reply({protocolVersion:message.params?.protocolVersion||'2025-06-18',capabilities:{tools:{listChanged:false}},serverInfo:{name:'qumi-depot-bridge',version:'0.4.0'},instructions:'Secure Depot CLI + build inspection. For missing secrets use credential_request, never send tokens in MCP arguments or chat.'});
+  if(method==='initialize')return reply({protocolVersion:message.params?.protocolVersion||'2025-06-18',capabilities:{tools:{listChanged:false}},serverInfo:{name:'qumi-depot-bridge',version:'0.5.0'},instructions:'Secure Depot CLI + build inspection. For missing secrets use credential_request, never send tokens in MCP arguments or chat.'});
   if(method==='ping')return reply({});
   if(method==='tools/list')return reply({tools});
   if(method==='tools/call'){
@@ -75,11 +76,23 @@ export async function handleRpc(message,{remote=false}={}){
 }
 async function stdio(){
  const rl=readline.createInterface({input:process.stdin,crlfDelay:Infinity,terminal:false});
- for await(const line of rl){if(line.length>1024*1024)continue;
-  let out;try{out=await handleRpc(JSON.parse(line),{remote:false});}
-  catch(e){out={jsonrpc:'2.0',id:null,error:{code:-32700,message:'Parse error'}};}
-  if(out!==null)process.stdout.write(`${JSON.stringify(out)}\n`);
- }
+ const send=value=>process.stdout.write(`${JSON.stringify(value)}\n`);
+ const prompts=createQuestionElicitation(send);
+ rl.on('line',raw=>{
+  if(raw.length>1024*1024)return;
+  let message;try{message=JSON.parse(raw)}catch{return;}
+  if(prompts.consume(message))return;
+  if(message.method==='initialize')prompts.initialize(message.params);
+  (async()=>{
+   let result=await handleRpc(message,{remote:false});
+   if(message.method==='tools/call'&&message.params?.name==='credential_request'&&result?.result?.structuredContent?.result?.mode==='url'){
+    const value=result.result.structuredContent.result;
+    const updated=await prompts.present(value);
+    result={...result,result:{content:[{type:'text',text:JSON.stringify(updated)}],structuredContent:{result:updated}}};
+   }
+   if(result!==null)send(result);
+  })().catch(()=>{if(message.id!==undefined)send({jsonrpc:'2.0',id:message.id,error:{code:-32603,message:'Internal bridge failure'}})});
+ });
 }
 function authorized(got,expected){if(typeof got!=='string'||got.length!==expected.length)return false;return crypto.timingSafeEqual(Buffer.from(got),Buffer.from(expected));}
 async function httpServer(){

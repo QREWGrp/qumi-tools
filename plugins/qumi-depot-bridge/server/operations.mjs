@@ -8,7 +8,8 @@ import {catalog as cliCatalog,help as cliHelp,scan as cliScan,cliRun} from './cl
 import {upstreamStatus,upstreamTools,upstreamCall} from './upstream.mjs';
 import {gitAskpassStatus,gitRemoteProbe} from './git.mjs';
 import {planInstall,installCli,locateCli} from './installer.mjs';
-import {portableVaultStatus} from './portable-vault.mjs';
+import {portableVaultStatus,CREDENTIALS,readVault,unseal,seal,writeVault,nonSecretReceipt,saveReceipt} from './portable-vault.mjs';
+import {startSecureQuestion} from './secure-question.mjs';
 
 const runFile = promisify(execFile);
 const jobs = new Map();
@@ -20,7 +21,9 @@ function sanitizeString(value, max=200) {
   return value;
 }
 async function token() {
-  const val = process.env.DEPOT_TOKEN || process.env.DEPOT_API_KEY || await getSecret('DEPOT_TOKEN') || await getSecret('DEPOT_API_KEY');
+  const portable=readVault();
+  const keys=portable && process.env.QUMI_DEPOT_VAULT_PASSPHRASE?unseal(portable,process.env.QUMI_DEPOT_VAULT_PASSPHRASE):{};
+  const val = process.env.DEPOT_TOKEN || process.env.DEPOT_API_KEY || keys.DEPOT_TOKEN || keys.DEPOT_API_KEY || await getSecret('DEPOT_TOKEN') || await getSecret('DEPOT_API_KEY');
   if (!val || !val.trim()) throw new Error('Depot token not configured on host (DEPOT_TOKEN or verified DEPOT_API_KEY)');
   return val;
 }
@@ -185,27 +188,31 @@ function jobResult(args){
   }
   return {...rec,recentLogs};
 }
-function credentialRequest({credential='DEPOT_TOKEN',action='provision',reason='Depot integration requires a credential'}={}){
+async function credentialRequest({credential='DEPOT_TOKEN',action='provision',reason='Depot integration requires a credential'}={},context={}){
  if(!['provision','rotate'].includes(action))throw Error('Credential action must be provision or rotate');
- if(!['DEPOT_TOKEN','DEPOT_API_KEY','DEPOT_GIT_KEY'].includes(credential))throw Error('Unknown credential type');
- const base={status:'operator_input_required',credential_type:credential,reason,
-  operator_question:`A fresh ${credential} is required. Please provision it through the secure operator-only vault; do NOT paste it into this chat.`,
-  nonsecret_choices:['Provision new','Rotate exposed credential','Cancel'],
-  local_command:`node deploy/operator-credentials.mjs ${action} ${credential}`,
-  security:'MCP form elicitation cannot carry API tokens. Run the secure prompt locally or use an approved secret manager on the agent host.'};
- const raw=process.env.QUMI_CREDENTIAL_PORTAL_URL;
- if(!raw)return {...base,secure_portal_configured:false};
- let u;try{u=new URL(raw);}catch{throw Error('Credential portal URL is malformed');}
- if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error('Credential portal must use a clean operator-approved HTTPS URL');
- return {...base,secure_portal_configured:true,secure_portal_url:u.toString(),
-  note:'Use URL-mode elicitation if supported by the MCP client. The portal itself must authenticate the operator and bind any input to that identity.'};
+ if(!CREDENTIALS.includes(credential))throw Error('Unknown Depot credential');
+ const base={status:'operator_input_required',question:`Authorize ${credential} for Depot?`,credential_type:credential,
+  message:'Please complete the separate encrypted answer form. NEVER paste credentials into agent chat.',
+  remote_warning:'Remote agent process cannot open a localhost form on your desktop; connect an approved HTTPS credential portal or use an operator-local agent.'};
+ if(context.remote===true)return {...base,secure_local_question_available:false};
+ return {status:'operator_input_required',...(await startSecureQuestion({bridge:'QUMI Depot Bridge',credential,description:reason,
+  fields:[{name:'token',label:`New ${credential}`,secret:true},{name:'passphrase',label:'Local vault passphrase (create or unlock)',secret:true},{name:'confirmation',label:'Confirm vault passphrase',secret:true}],
+  save:async ({token,passphrase,confirmation})=>{
+   if(passphrase!==confirmation||passphrase.length<14)throw Error('Passphrase must match and be at least 14 characters');
+   const previous=readVault();const current=previous?unseal(previous,passphrase):{};
+   if(previous&&current[credential]===token)throw Error('Credential is unchanged; refusing fake rotation');
+   current[credential]=token;
+   const record=seal(current,passphrase);writeVault(record);
+   const receipt=nonSecretReceipt(record,{action:previous?'rotate':'provision',changedKeys:[credential],previous});saveReceipt(receipt);
+   return {saved:true,encrypted:true};
+  }}))};
 }
 async function execute(operation,args={},context={}){
   try {
     switch(operation){
       case 'health':{const secret=secretStatus();return {ok:true,mode:process.env.QUMI_ALLOW_BUILDS==='1'?'approved-builds':'read-only',configured:secret.configured,allowedProjects:(process.env.QUMI_DEPOT_PROJECT_IDS||process.env.DEPOT_PROJECT_ID||'').split(',').filter(Boolean),hasCheckout:!!process.env.QUMI_CHECKOUT_ROOT,cliMutationsEnabled:process.env.QUMI_DEPOT_CLI_MUTATIONS==='1',secrets:{configured:secret.configured,provider:secret.provider,hasGitKey:secret.keys?.DEPOT_GIT_KEY===true}};}
       case 'credentials_status':return {...secretStatus(),portableVault:portableVaultStatus()};
-      case 'credential_request':return credentialRequest(args);
+      case 'credential_request':return await credentialRequest(args,context);
       case 'depot_cli_detect':return locateCli();
       case 'runtime_status':return {mcpTransport:'dependency-free stdio / stateless authenticated HTTP',node:process.version,cli:locateCli(),secrets:secretStatus(),portableVault:portableVaultStatus(),sdkAvailable:(()=>{try{import.meta.resolve('@depot/sdk-node');return true;}catch{return false;}})(),requiresDepotProjectAllowlist:true};
       case 'depot_cli_install_plan':return planInstall(args);
@@ -215,7 +222,7 @@ async function execute(operation,args={},context={}){
       case 'depot_upstream_status':return upstreamStatus();
       case 'depot_upstream_tools':return upstreamTools();
       case 'depot_upstream_call':return upstreamCall(args);
-      case 'launch_secret_setup':return launchSecretSetup({remote:context.remote!==false});
+      case 'launch_secret_setup':return await credentialRequest({credential:'DEPOT_TOKEN'},context);
       case 'depot_cli_catalog':return cliCatalog();
       case 'depot_cli_scan':return cliScan(args,{cliPath:depotExe});
       case 'depot_cli_help':return cliHelp(args,{cliPath:depotExe});

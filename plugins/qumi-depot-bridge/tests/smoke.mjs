@@ -9,7 +9,7 @@ try{
  assert.equal(h.mode,'read-only');assert.equal(h.configured,false);
  assert.equal((await execute('depot_cli_catalog')).mode.includes('dynamic'),true);
  assert.equal((await execute('credentials_status')).configured,false);
- await assert.rejects(()=>execute('launch_secret_setup',{}, {remote:true}),/Remote MCP/);
+ const remoteQuestion=await execute('launch_secret_setup',{}, {remote:true});assert.equal(remoteQuestion.secure_local_question_available,false);assert.equal(Object.hasOwn(remoteQuestion,'url'),false);
  await assert.rejects(()=>execute('start_build',{approved_sha:'0'.repeat(40)}),/read-only/);
  await assert.rejects(()=>execute('verify_checkout',{}),/QUMI_CHECKOUT_ROOT/);
  await assert.rejects(()=>execute('build_job',{job_id:'../../etc/passwd'}),/Invalid job ID/);
@@ -19,5 +19,5 @@ try{
  process.env.DEPOT_TOKEN='SAMPLE-NONPROD-TOKEN-FOR-REDACTION';
  assert.equal(redact(`prefix ${process.env.DEPOT_TOKEN} suffix`),'prefix [REDACTED] suffix');
  assert.equal(await getSecret('DEPOT_TOKEN'),process.env.DEPOT_TOKEN);
- console.log('PASS: read-only defaults, credential-dialog remote denial, CLI mutation policy, safe error handling, forbidden job traversal, token redaction');
+ console.log('PASS: read-only defaults, remote credential question has no unsafe local URL, CLI mutation policy, safe error handling, forbidden job traversal, token redaction');
 }finally {for(const key of Object.keys(process.env)){if(keep[key]===undefined)delete process.env[key];}Object.assign(process.env,keep);}

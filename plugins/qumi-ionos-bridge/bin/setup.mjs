@@ -1,10 +1,16 @@
 #!/usr/bin/env node
 import {question} from './terminal.mjs';
+import {launchWindowsDialog} from '../server/dialog.mjs';
 import {encryptVault,saveVault,receiptFor,configFile} from '../server/config.mjs';
 import fs from 'node:fs';
 const provider=process.argv[2];
 if(!['ionos','cloudflare'].includes(provider)){process.stderr.write('Usage: node bin/setup.mjs ionos|cloudflare\n');process.exit(2)}
 try{
+ if(process.platform==='win32'&&!process.argv.includes('--terminal')){
+  const outcome=await launchWindowsDialog(provider);
+  process.stdout.write(JSON.stringify(outcome)+'\n');
+  process.exit(0);
+ }
  const url=await question(`Official ${provider} HTTPS MCP endpoint URL (from your provider portal)`);
  const token=await question(`${provider} Personal Access Token (input hidden)`,{secret:true});
  const pass=await question('New vault encryption passphrase (input hidden; do not store in Git)',{secret:true});

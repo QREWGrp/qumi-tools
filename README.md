@@ -1,6 +1,6 @@
 # QUMI Dev Tools — Engineering Bridges
 
-Official QUMI engineering plugin source for **QUMI Depot Bridge v0.4.0**.
+Official QUMI engineering plugin source for **QUMI Depot Bridge v0.5.0**.
 
 **Publisher:** Qumi Teknolojis, trading name of QROO Inc.  
 **Developer:** Mohammed Mansour  
@@ -54,6 +54,22 @@ No provider PAT, client domain, account, or personal MCP server URL is committed
 [QUMI FLY BRIDGE](plugins/qumi-fly-bridge/README.md) integrates Fly.io's official [OAuth MCP](https://mcp.fly.io) with agent-local flyctl installation, dynamic CLI help/command discovery, and plan-and-approve execution. It does not bundle personal Fly apps, organizations or tokens. Fly MCP tools are exposed dynamically by Fly.io and bounded by each operator's OAuth consent; the CLI execution surface requires separate authorization for changes.
 
 See the [Codex setup](plugins/qumi-fly-bridge/deploy/CODEX-IMPORT.md) and [Claude setup](plugins/qumi-fly-bridge/deploy/CLAUDE-IMPORT.md). CLI tokens are provisioned privately using Fly auth login, a supported platform secret store, or the per-user encrypted vault.
+
+## Unified encrypted credential questions — Windows, Linux, macOS
+
+All three bridges now share the same **MCP URL-mode credential question** behavior.
+
+| Bridge | Release | Per-user credentials |
+|---|---|---|
+| [Depot](plugins/qumi-depot-bridge/README.md) | 0.5.0 | DEPOT_TOKEN, DEPOT_API_KEY, DEPOT_GIT_KEY |
+| [IONOS](plugins/qumi-ionos-bridge/README.md) | 0.2.0 | IONOS Hosting MCP PAT, optional Cloudflare MCP token |
+| [Fly](plugins/qumi-fly-bridge/README.md) | 0.2.0 | Fly CLI API token; official Fly MCP uses OAuth |
+
+Agents invoke the bridge credential-request tool when authentication is missing. Clients supporting MCP URL elicitation display a user question linking to a secure, per-user browser input. Other clients receive a temporary secure URL fallback. **The operator types the secret only in the protected browser page, never in chat or an MCP argument.** The page encrypts its answer using one-time RSA-OAEP/AES-GCM before local submission. The bridge persists AES-256-GCM/scrypt-encrypted credentials outside Git in the user profile. Only non-secret encrypted-record fingerprints may appear in audit receipts.
+
+For remote/cloud agents, localhost on the agent host cannot be opened on the operator's machine. Use a separately deployed authenticated HTTPS credential portal or the agent platform's secret manager. Browser question styling remains controlled by Codex, Claude, or the current MCP client; the plugin cannot force identical native bubbles in every client.
+
+Tests validate protocol URL elicitation, encrypted browser submission, and existing CLI/MCP regression behavior under Linux. Real provider authentication and Windows/macOS manual UI tests remain pending.
 
 ## Status and licensing
 

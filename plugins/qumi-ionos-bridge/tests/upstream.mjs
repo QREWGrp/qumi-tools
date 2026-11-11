@@ -30,9 +30,9 @@ try{
  const written=await dispatch('ionos_invoke_tool',{name:'dns_create_records',arguments:{zone_id:'z1'},approval_id:ticket.id});assert.equal(written.risk,'change');
  assert.deepEqual(calls,['dns_get_zones','dns_create_records']);
  process.env.QUMI_IONOS_TOOL_MODE='eager';const eager=await registeredTools();assert(eager.some(x=>x.name==='ionos__dns_get_zones'));
- process.env.QUMI_IONOS_TOOL_MODE='dynamic';assert.equal((await registeredTools()).length,5);
+ process.env.QUMI_IONOS_TOOL_MODE='dynamic';assert.equal((await registeredTools()).length,6);
  console.log('PASS dynamic discovery, exact schema, read-only call, mutating approval, eager tool exposure');
- // Protocol-level smoke: MCP server starts and advertises the five static tools before any credential configuration.
+ // Protocol-level smoke: MCP server starts and advertises the six static tools before any credential configuration.
  const child=spawn(process.execPath,[new URL('../server/index.mjs',import.meta.url).pathname],{env:{...process.env,QUMI_IONOS_TOOL_MODE:'dynamic'},stdio:['pipe','pipe','pipe']});
  const outcome=await new Promise((resolve,reject)=>{
   let acc='';let seen=[];const timeout=setTimeout(()=>reject(Error('MCP subprocess timeout')),4000);
@@ -40,5 +40,5 @@ try{
   child.stdin.write(JSON.stringify({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-06-18'}})+'\n');
   child.stdin.write(JSON.stringify({jsonrpc:'2.0',id:2,method:'tools/list',params:{}})+'\n');
  });
- assert.equal(outcome[1].result.tools.length,5);child.kill();console.log('PASS actual MCP initialize and tools/list over stdio');
+ assert.equal(outcome[1].result.tools.length,6);child.kill();console.log('PASS actual MCP initialize and tools/list over stdio');
 }finally{server.close();fs.rmSync(base,{recursive:true,force:true});}

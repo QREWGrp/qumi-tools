@@ -44,3 +44,12 @@ This plugin supports Codex, Claude Code and Depot-hosted agents; never assume a 
 When a token is missing or exposed, call `credential_request` with `action='provision'` or `'rotate'` and the credential type. Ask the operator the **nonsecret** question: which step to take, and whether they will use the private terminal or an approved external HTTPS credential portal. Do NOT solicit API keys, Git tokens, or passphrases as chat answers, MCP form data, issue comments, or tool arguments. Operators use `deploy/operator-credentials.mjs` in a private terminal (masked input) and can optionally commit only non-secret ciphertext-digest receipts. An AES ciphertext digest cannot decrypt the credential. Revocation of old exposed provider keys and verification of fresh credentials are separate provider-side steps.
 
 Codex and Claude may request operator decisions differently; the plugin cannot force a model-host-specific Question UI. Use a regular operator question for consent, then private out-of-band entry. Note that ChatGPT web requires a verified remotely reachable MCP server; the local `stdio` package alone does not make tools appear there. SDK build tools require separately installed `@depot/sdk-node`; CLI help and installation work without it.
+
+
+## Mandatory cross-platform secure questions
+
+On missing credentials, invoke the bridge's credential question tool rather than sending the operator to a directory or asking for a token in chat.
+The tool requests **MCP URL-mode elicitation** when the client supports it, otherwise provides a short-lived localhost secure question link for the operator.
+Questions work with any Node.js 20+ agent runtime on Windows, Linux or macOS. The operator's browser encrypts each response before loopback submission; the agent stores per-user AES-256-GCM ciphertext under the home directory, outside Git, and reports only sanitized readiness.
+The secure URL is reachable only from the machine running the agent MCP process. For remote/cloud agents, ask for an approved identity-bound HTTPS portal or use a supported platform secret manager; never pretend localhost reaches a remote desktop.
+Never accept plaintext tokens, encryption passphrases, or answers to secret questions through ordinary MCP forms, tool arguments, chat, or Git. If the provider offers OAuth, prefer OAuth over token collection. Reconfirm any mutation and retain only non-secret audit commitments.

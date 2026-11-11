@@ -32,7 +32,7 @@ try{
  assert.equal(JSON.stringify(receipt).includes('nonprod-sample'),false);
  assert.equal(JSON.stringify(encrypted).includes('nonprod-sample'),false);
  let msg=await handleRpc({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-06-18'}});
- assert.equal(msg.result.serverInfo.version,'0.4.0');
+ assert.equal(msg.result.serverInfo.version,'0.5.0');
  msg=await handleRpc({jsonrpc:'2.0',id:2,method:'tools/list'});
  const names=new Set(msg.result.tools.map(t=>t.name));
  for(const name of ['health','list_builds','get_build','get_build_steps','get_build_step_logs','depot_cli_detect','depot_cli_install_plan','depot_cli_install','credential_request','git_askpass_status'])assert.ok(names.has(name),name);

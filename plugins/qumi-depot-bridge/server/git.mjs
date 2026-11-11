@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {redact,secretStatus,getSecret,vaultDir} from './vault.mjs';
+import {readVault,unseal} from './portable-vault.mjs';
 const run=promisify(execFile);
 const deploy=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../deploy');
 const askpass=path.join(deploy,process.platform==='win32'?'git-askpass.cmd':'git-askpass-unix.sh');
@@ -20,10 +21,13 @@ function validateOrigin(remote){
 async function origin(){const {stdout}=await run('git',['remote','get-url','origin'],{cwd:checkoutRoot(),timeout:15000,windowsHide:true});return validateOrigin(stdout.trim());}
 function gitKeyAvailable(){
  if(!!process.env.DEPOT_GIT_KEY)return true;
+ try{if(readVault()&&process.env.QUMI_DEPOT_VAULT_PASSPHRASE)return !!unseal(readVault(),process.env.QUMI_DEPOT_VAULT_PASSPHRASE).DEPOT_GIT_KEY;}catch{}
  try{return process.platform==='win32'&&fs.existsSync(path.join(vaultDir(),'DEPOT_GIT_KEY.dpapi'));}catch{return false;}
 }
 async function gitEnv(){
- const secret=await getSecret('DEPOT_GIT_KEY');
+ const portable=readVault();
+ const unlocked=portable&&process.env.QUMI_DEPOT_VAULT_PASSPHRASE?unseal(portable,process.env.QUMI_DEPOT_VAULT_PASSPHRASE):{};
+ const secret=process.env.DEPOT_GIT_KEY||unlocked.DEPOT_GIT_KEY||await getSecret('DEPOT_GIT_KEY');
  if(!secret)throw new Error('DEPOT_GIT_KEY is not provisioned in this agent environment; use operator-only credential provisioning');
  if(process.platform!=='win32')fs.chmodSync(askpass,0o700);
  return {...process.env,DEPOT_GIT_KEY:secret,GIT_ASKPASS:askpass,GIT_TERMINAL_PROMPT:'0',QUMI_GIT_ASKPASS_ACTIVE:'1',

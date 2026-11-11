@@ -1,6 +1,10 @@
 import {findCli,help,version,planCli,executeCli,spawnBounded} from './cli.mjs';
 import {releasePlan,install,detectInstall} from './install.mjs';
-import {vaultStatus,temporaryToken} from './vault.mjs';
+import {vaultStatus,temporaryToken,saveVault,decryptToken} from './vault.mjs';
+import {stateDir,loadJson} from './state.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
+import {startSecureQuestion} from './secure-question.mjs';
 import {scrub} from './state.mjs';
 
 const object=(properties={},required=[])=>({type:'object',properties,required,additionalProperties:false});
@@ -8,7 +12,7 @@ const str=(desc)=>({type:'string',description:desc});
 const tool=(name,description,inputSchema)=>({name,description,inputSchema});
 export const tools=[
  tool('fly_runtime_status','Report local CLI installation, safe credential readiness, and official Fly MCP URL without checking or revealing credentials',object()),
- tool('fly_credential_request','Ask a non-secret operator question and explain Fly OAuth versus secure CLI token provisioning; never accepts secrets',object({purpose:str('Why Fly access is needed'),mode:{type:'string',enum:['mcp','cli']}})),
+ tool('fly_credential_request','Ask a cross-platform secure encrypted question for Fly CLI tokens; Fly MCP uses OAuth',object({purpose:str('Why Fly access is needed'),mode:{type:'string',enum:['mcp','cli']}})),
  tool('fly_cli_version','Show installed flyctl version or report missing installation',object()),
  tool('fly_cli_help','Discover help for any current flyctl command or nested subcommand',object({command:{type:'array',items:{type:'string'},maxItems:8}})),
  tool('fly_cli_catalog','Discover flyctl command categories using installed binary help',object()),
@@ -22,8 +26,22 @@ export const tools=[
 ];
 export async function dispatch(name,args={}){
  switch(name){
- case 'fly_runtime_status':return {...detectInstall(),credentials:vaultStatus(),mcp:{name:'fly-official',url:'https://mcp.fly.io',authentication:'Browser OAuth handled separately by MCP client',connected:'Not verifiable from local CLI bridge'},version:'0.1.0'};
- case 'fly_credential_request':return {question:args.mode==='cli'?'Would you like to authorize Fly CLI for this agent using fly auth login or a scoped Fly API token?':'Would you like to connect your Fly.io account to the official Fly MCP and select the allowed organizations?',mode:args.mode||'mcp',purpose:args.purpose||'Fly operations',secretsAcceptedInChat:false,method:args.mode==='cli'?'Run fly auth login interactively, or inject FLY_API_TOKEN through your agent secret manager, or run node bin/credentials.mjs store in a private terminal':'Open the official OAuth browser consent flow from your MCP client; do NOT paste an API token',url:'https://mcp.fly.io'};
+ case 'fly_runtime_status':return {...detectInstall(),credentials:vaultStatus(),mcp:{name:'fly-official',url:'https://mcp.fly.io',authentication:'Browser OAuth handled separately by MCP client',connected:'Not verifiable from local CLI bridge'},version:'0.2.0'};
+ case 'fly_credential_request':{
+   if(args.mode==='mcp')return {question:'Connect Fly.io through the official OAuth flow?',mode:'oauth',url:'https://mcp.fly.io',note:'Fly MCP OAuth does not require copying a token into an agent question. Use the MCP client authorization UI.'};
+   return await startSecureQuestion({bridge:'QUMI FLY BRIDGE',credential:'FLY_API_TOKEN',
+    description:'Enter your own scoped Fly CLI API token privately on this operating-system account.',
+    fields:[{name:'token',label:'Fly CLI API token',secret:true,max:8192},
+     {name:'passphrase',label:'Vault encryption passphrase (12+ characters)',secret:true,max:1024},
+     {name:'confirmation',label:'Confirm vault passphrase',secret:true,max:1024}],
+    save:async ({token,passphrase,confirmation})=>{
+      if(passphrase!==confirmation||passphrase.length<12)throw Error('Passphrases must match and contain 12+ characters');
+      const existing=path.join(stateDir(),'fly-token.vault.json');
+      if(fs.existsSync(existing))decryptToken(loadJson(existing),passphrase);
+      saveVault(token,passphrase);
+      return {saved:true,encrypted:true};
+    }});
+ }
  case 'fly_cli_version':return await version();
  case 'fly_cli_help':return await help(args.command??[]);
  case 'fly_cli_catalog':return await help([]);

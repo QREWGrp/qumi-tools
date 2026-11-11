@@ -1,19 +1,40 @@
-import {configStatus,redact} from './config.mjs';
+import {randomUUID as cryptoRandom} from 'node:crypto';
+import {configStatus,redact,encryptVault,saveVault,receiptFor,configDir,configFile,decryptVault} from './config.mjs';
+import {startSecureQuestion} from './secure-question.mjs';
+import fs from 'node:fs';
+import path from 'node:path';
 import {listUpstream,callUpstream,clearCache} from './upstream.mjs';
 import {risk,canonical,consumeApproval} from './policy.mjs';
 
 export const STATIC_TOOLS=[
  {name:'ionos_bridge_status',description:'Show configured providers, safe credential readiness, and effective discovery mode without showing tokens',inputSchema:{type:'object',properties:{}}},
- {name:'ionos_credential_request',description:'Ask operator to provision or rotate IONOS MCP PAT or optional Cloudflare MCP token OUT OF BAND; never send tokens via chat',inputSchema:{type:'object',properties:{provider:{type:'string',enum:['ionos','cloudflare']}}}},
+ {name:'ionos_credential_request',description:'Display a cross-platform encrypted credential question via MCP URL elicitation; token never enters chat',inputSchema:{type:'object',properties:{provider:{type:'string',enum:['ionos','cloudflare']}}}},
+ {name:'ionos_secure_setup',description:'Compatibility alias: launch the portable encrypted credential question on Windows, Linux, or macOS',inputSchema:{type:'object',properties:{provider:{type:'string',enum:['ionos','cloudflare'],default:'ionos'}}}},
  {name:'ionos_discover_tools',description:'Dynamically fetch ALL available tools from an upstream MCP server, with keyword, provider and pagination filters',inputSchema:{type:'object',properties:{provider:{type:'string',enum:['ionos','cloudflare'],default:'ionos'},query:{type:'string'},offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:200},refresh:{type:'boolean'}}}},
  {name:'ionos_describe_tool',description:'Return CURRENT upstream MCP input schema and details for any tool; no hardcoded catalog',inputSchema:{type:'object',properties:{provider:{type:'string',enum:['ionos','cloudflare'],default:'ionos'},name:{type:'string'}},required:['name']}},
  {name:'ionos_invoke_tool',description:'Invoke ANY dynamically discovered upstream MCP tool. Read-only calls execute; state-changing calls require exact one-time local operator approval',inputSchema:{type:'object',properties:{provider:{type:'string',enum:['ionos','cloudflare'],default:'ionos'},name:{type:'string'},arguments:{type:'object',additionalProperties:true},approval_id:{type:'string'},dry_run:{type:'boolean'}},required:['name']}}];
 const validProvider=p=>['ionos','cloudflare'].includes(p)?p:'ionos';
 export async function dispatch(name,args={}){
- if(name==='ionos_bridge_status')return {bridge:'qumi-ionos-bridge',version:'0.1.0',providers:configStatus(),tool_mode:process.env.QUMI_IONOS_TOOL_MODE==='eager'?'eager':'dynamic',required_configuration:'IONOS hosted MCP Personal Access Token and server URL, provided per user',note:'Status does not validate live authorization; call ionos_discover_tools to test upstream'};
+ if(name==='ionos_bridge_status')return {bridge:'qumi-ionos-bridge',version:'0.2.0',providers:configStatus(),tool_mode:process.env.QUMI_IONOS_TOOL_MODE==='eager'?'eager':'dynamic',required_configuration:'IONOS hosted MCP Personal Access Token and server URL, provided per user',note:'Status does not validate live authorization; call ionos_discover_tools to test upstream'};
+ if(name==='ionos_secure_setup'){return dispatch('ionos_credential_request',args);}
  if(name==='ionos_credential_request'){
   const provider=validProvider(args.provider);
-  return {provider,question:`Authorize ${provider==='ionos'?'IONOS Hosting MCP':'Cloudflare MCP'} for this agent?`,secret_input:'NOT IN CHAT',operator_instructions:`On the operator-owned agent workstation run: node bin/setup.mjs ${provider}; enter HTTPS MCP URL and PAT/token using masked prompts. Alternatively inject the provider URL and bearer token through your agent secret manager.`,credential_portal:provider==='ionos'?'https://developer.hosting.ionos.com/mcp':null,after_setup:'Restart the agent MCP process or refresh its configuration; call ionos_discover_tools to verify permissions',warning:'Never paste tokens into MCP arguments, chat, issues or Git.'};
+  return await startSecureQuestion({bridge:'QUMI IONOS Bridge',credential:provider==='ionos'?'IONOS_PAT':'CLOUDFLARE_MCP_TOKEN',
+   description:`Authorize ${provider} MCP on this operating-system account. The actual secret answer remains outside chat.`,
+   fields:[{name:'endpoint',label:'Official HTTPS MCP endpoint',type:'url',max:1024},
+    {name:'token',label:'MCP Personal Access Token',secret:true,max:8192},
+    {name:'passphrase',label:'Vault passphrase (at least 12 characters)',secret:true,max:1024},
+    {name:'confirmation',label:'Confirm vault passphrase',secret:true,max:1024}],
+   save:async ({endpoint,token,passphrase,confirmation})=>{
+    if(passphrase.length<12||passphrase!==confirmation)throw Error('Vault passphrases must match and be 12+ characters');
+    const file=configFile(provider);
+    if(fs.existsSync(file))decryptVault(JSON.parse(fs.readFileSync(file,'utf8')),passphrase);
+    const record=encryptVault(provider,endpoint,token,passphrase);saveVault(record);
+    const dir=path.join(configDir(),'receipts');fs.mkdirSync(dir,{recursive:true,mode:0o700});
+    const rec=receiptFor(record);const id=cryptoRandom();
+    fs.writeFileSync(path.join(dir,`${id}.json`),JSON.stringify(rec,null,2),{mode:0o600,flag:'wx'});
+    return {saved:true,encrypted:true};
+   }});
  }
  if(name==='ionos_discover_tools'){
   const provider=validProvider(args.provider),tools=await listUpstream(provider,{refresh:args.refresh===true});const q=String(args.query??'').toLowerCase();

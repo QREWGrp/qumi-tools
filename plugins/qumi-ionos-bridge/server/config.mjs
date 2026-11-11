@@ -2,7 +2,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 
+const dpapiCache=new Map();
+const windowsUnsealScript=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../bin/unseal-windows.ps1');
 const vendor={ionos:['IONOS_MCP_URL','IONOS_PAT'],cloudflare:['QUMI_CLOUDFLARE_MCP_URL','QUMI_CLOUDFLARE_MCP_TOKEN']};
 export const configDir=()=>process.env.QUMI_IONOS_CONFIG_DIR || path.join(os.homedir(),'.config','qumi-ionos-bridge');
 export function configFile(provider){if(!(provider in vendor))throw Error('Unknown provider');return path.join(configDir(),`${provider}.vault.json`);}
@@ -32,10 +36,27 @@ export function decryptVault(record,passphrase){
 }
 export function receiptFor(record){return {schema:'qumi.ionos.credential-rotation.v1',provider:record.provider,created_at:new Date().toISOString(),ciphertext_commitment_sha256:crypto.createHash('sha256').update(record.ciphertext).digest('hex'),note:'Fingerprint of ciphertext, not token; issuer-side revocation still required.'};}
 export function saveVault(record){const dir=configDir();fs.mkdirSync(dir,{recursive:true,mode:0o700});const filename=configFile(record.provider);fs.writeFileSync(filename,JSON.stringify(record,null,2)+'\n',{mode:0o600,flag:'w'});try{fs.chmodSync(filename,0o600);}catch{}return filename;}
+export function windowsDpapiFile(provider){if(!(provider in vendor))throw Error('Unknown provider');return path.join(configDir(),`${provider}.dpapi`);}
+function readWindowsDpapi(provider){
+ const file=windowsDpapiFile(provider);
+ if(process.platform!=='win32'||!fs.existsSync(file))return null;
+ const stat=fs.statSync(file);
+ const cached=dpapiCache.get(provider);
+ if(cached?.mtimeMs===stat.mtimeMs&&cached?.size===stat.size)return cached.value;
+ try{
+  const json=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',windowsUnsealScript,'-Provider',provider,'-VaultPath',file],{windowsHide:true,encoding:'utf8',maxBuffer:32768,timeout:12000,stdio:['ignore','pipe','pipe']});
+  const obj=JSON.parse(json);
+  const result={endpoint:urlCheck(obj.endpoint),token:obj.token,source:'windows-dpapi'};
+  if(typeof result.token!=='string'||result.token.length<8)throw Error('Invalid credential');
+  dpapiCache.set(provider,{mtimeMs:stat.mtimeMs,size:stat.size,value:result});
+  return result;
+ }catch{throw Error('Windows encrypted credential could not be opened. Run the MCP server under the Windows account that stored it, or re-provision it.');}
+}
 export function getProviderConfig(provider){
  if(!vendor[provider])throw Error('Unknown provider');
  const [endpointKey,tokenKey]=vendor[provider];const envUrl=process.env[endpointKey],envToken=process.env[tokenKey];
  if(envUrl&&envToken)return {endpoint:urlCheck(envUrl),token:envToken,source:'injected'};
+ const windowsCred=readWindowsDpapi(provider);if(windowsCred)return windowsCred;
  const vaultPath=configFile(provider);
  if(fs.existsSync(vaultPath)){
   const unlock=process.env.QUMI_IONOS_VAULT_PASSPHRASE;
@@ -46,6 +67,6 @@ export function getProviderConfig(provider){
  throw Error(`${provider} credentials not configured; ask operator to run node bin/setup.mjs ${provider} privately`);
 }
 export function configStatus(){const result={};for(const provider of Object.keys(vendor)){
-  const [u,t]=vendor[provider];result[provider]={configured:Boolean((process.env[u]&&process.env[t])||fs.existsSync(configFile(provider))),source:process.env[u]&&process.env[t]?'injected':fs.existsSync(configFile(provider))?'encrypted-vault':'none',vault_unlock_available:!!process.env.QUMI_IONOS_VAULT_PASSPHRASE};
+  const [u,t]=vendor[provider];const hasDpapi=process.platform==='win32'&&fs.existsSync(windowsDpapiFile(provider));result[provider]={configured:Boolean((process.env[u]&&process.env[t])||hasDpapi||fs.existsSync(configFile(provider))),source:process.env[u]&&process.env[t]?'injected':hasDpapi?'windows-dpapi':fs.existsSync(configFile(provider))?'encrypted-vault':'none',vault_unlock_available:hasDpapi||!!process.env.QUMI_IONOS_VAULT_PASSPHRASE};
  }return result;}
 export function redact(err){let msg=String(err?.message||err).slice(0,750);for(const vars of Object.values(vendor))for(const k of vars.slice(1))if(process.env[k])msg=msg.split(process.env[k]).join('[REDACTED]');return msg;}

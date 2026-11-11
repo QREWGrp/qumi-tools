@@ -37,7 +37,7 @@ const tools=[
  ['build_job','Poll host-side job status and retrieve bounded log tail',{job_id:z.string().uuid(),tail_lines:z.number().int().min(1).max(120).optional()},'build_job']
 ];
 function newMcp(context={remote:true}){
- const server=new McpServer({name:'qumi-depot-bridge',version:'0.4.0'}, {capabilities:{tools:{}}});
+ const server=new McpServer({name:'qumi-depot-bridge',version:'0.5.0'}, {capabilities:{tools:{}}});
  for(const [name,description,inputSchema,operation] of tools){
   server.registerTool(name,{description,inputSchema},async (args={})=>{
     try {
