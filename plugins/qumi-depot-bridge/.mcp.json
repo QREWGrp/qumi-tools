@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "qumi-depot-local": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${PLUGIN_ROOT}/server/standalone-mcp.mjs",
+        "--stdio"
+      ],
+      "env": {},
+      "cwd": "${PLUGIN_ROOT}"
+    }
+  }
+}

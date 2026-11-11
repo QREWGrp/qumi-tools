@@ -1,0 +1,18 @@
+# Credential and agent-local state — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.dpapi
+vault.aes256gcm.json
+vault.*.json
+.qumi-tools/
+node_modules/
+.cache/
+.DS_Store
+*.log
+credentials.json
+secrets.json

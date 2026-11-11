@@ -1,0 +1,32 @@
+{
+  "interface": {
+    "displayName": "QUMI Depot Bridge",
+    "shortDescription": "Governed Depot build access",
+    "longDescription": "QUMI Depot Bridge by Mohammed Mansour for Qumi Teknolojis, trading name of QROO Inc. (https://qumi.app; https://qr-oo.com; support@qr-oo.com). Installable by Codex/Claude and Depot-hosted agents. Ships a zero-dependency local MCP server to expose CLI detection, SHA-256 verified Depot CLI installation into user or project scope, discovery of all supported CLI subcommands, guarded execution, build SDK operations when separately installed, and optional operator-configured upstream MCP. Secrets must never be entered in chat or MCP form mode. The operator-only hidden terminal encrypts tokens with AES-256-GCM and a passphrase; an unlocked agent process can use them in memory, including GIT_ASKPASS. Rotation produces a non-secret encrypted-ciphertext fingerprint receipt optionally committed to Git. Windows DPAPI remains supported. A ChatGPT web connection requires a separately hosted verified HTTPS MCP endpoint; packaging alone does not deploy one.",
+    "developerName": "Mohammed Mansour",
+    "category": "Developer Tools",
+    "capabilities": [],
+    "defaultPrompt": [
+      "Inspect QUMI Depot builds through the MCP SDK bridge and return failing step logs, IDs, and evidence links.",
+      "Show the installed Depot CLI command catalog and inspect a subcommand before execution.",
+      "Diagnose the Windows VHost MCP connection and report missing credentials securely."
+    ],
+    "websiteURL": "https://qumi.app"
+  },
+  "name": "qumi-depot-bridge",
+  "version": "0.4.0",
+  "description": "Portable QUMI internal engineering plugin: Depot CLI discovery and verified agent-local installation, SDK/MCP build tools, secure operator credential rotation, non-secret Git receipts.",
+  "author": {
+    "name": "Mohammed Mansour"
+  },
+  "keywords": [
+    "qumi",
+    "depot",
+    "mcp",
+    "devops",
+    "build-evidence",
+    "windows"
+  ],
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json"
+}

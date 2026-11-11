@@ -1,0 +1,20 @@
+{
+  "name": "qumi-engineering",
+  "interface": {
+    "displayName": "QUMI Engineering"
+  },
+  "plugins": [
+    {
+      "name": "qumi-depot-bridge",
+      "source": {
+        "source": "local",
+        "path": "./plugins/qumi-depot-bridge"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

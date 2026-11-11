@@ -1,0 +1,20 @@
+{
+  "name": "qumi-depot-mcp-runtime",
+  "private": true,
+  "version": "0.4.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node standalone-mcp.mjs --stdio",
+    "start:http": "node standalone-mcp.mjs --http",
+    "check": "node --check index.mjs && node --check operations.mjs && node --check cli.mjs && node --check vault.mjs && node --check git.mjs && node --check upstream.mjs && node --check standalone-mcp.mjs && node --check installer.mjs && node --check portable-vault.mjs",
+    "test": "node ../tests/smoke.mjs && node ../tests/integration-local.mjs && node ../tests/integration-mcp-v03.mjs && node ../tests/integration-v040.mjs && node ../tests/integration-installer-v040.mjs"
+  },
+  "dependencies": {
+    "@depot/sdk-node": "2.2.0",
+    "@modelcontextprotocol/sdk": "^1.20.0",
+    "zod": "^3.25.0"
+  }
+}
