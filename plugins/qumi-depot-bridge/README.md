@@ -1,9 +1,9 @@
-# QUMI Depot Bridge — Private v0.4.0
+# QUMI Depot Bridge — Public Source v0.4.0
 
 **Publisher:** Mohammed Mansour · Qumi Teknolojis (trading name of QROO Inc.)  
 **Websites:** https://qumi.app · https://qr-oo.com  
 **Support:** support@qr-oo.com  
-**Audience:** Internal QUMI engineering teams only. Not a public plugin.
+**Distribution:** Public source through [QUMI Dev Tools](https://github.com/QREWGrp/qumi-dev-tools); individual credentials remain private. Public GitHub marketplace distribution does not mean the plugin has been approved for the universal ChatGPT/Codex Plugins Directory.
 
 ## What is working, and what is not
 
