@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.dpapi
+*.vault*
+node_modules/
+.qumi-tools/
+.qumi-fly/
+credentials.json
+secrets.json
+logs/
+*.log

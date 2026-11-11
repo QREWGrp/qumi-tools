@@ -1,0 +1,34 @@
+{
+  "interface": {
+    "capabilities": [],
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Check QUMI FLY BRIDGE runtime status, Fly MCP connection and flyctl installation readiness without showing secrets.",
+      "Discover Fly's live CLI commands and official MCP tools; summarize my authorized Fly resources.",
+      "Inspect Fly app health and logs, then prepare a separate approval plan before any deployment or infrastructure change."
+    ],
+    "developerName": "Mohammed Mansour",
+    "displayName": "QUMI FLY BRIDGE",
+    "longDescription": "QUMI FLY BRIDGE by Mohammed Mansour for Qumi Teknolojis (trading name of QROO Inc.). Provides a direct connection to Fly.io's official OAuth-protected remote MCP server at https://mcp.fly.io, plus an independent agent-local MCP runtime exposing flyctl installation, live command discovery, health checks, authenticated read operations and individually approved state-changing CLI commands. No organization, app, account, path or credentials are bundled. Each operator authorizes Fly MCP through the official browser OAuth flow; CLI authentication uses Fly's own login, a platform-injected FLY_API_TOKEN, or a local passphrase-encrypted vault unlocked only at execution. Includes official fly skills/setup agent guidance and controlled local installation for Codex, Claude Code and other MCP clients. Separate official MCP and CLI surfaces avoid hardcoding upstream tools. Fly MCP capabilities are governed by the actual connected server and OAuth grants.",
+    "shortDescription": "Fly MCP and CLI for agents",
+    "websiteURL": "https://qumi.app"
+  },
+  "name": "qumi-fly-bridge",
+  "version": "0.1.0",
+  "description": "Portable QUMI Fly.io engineering bridge: official Fly MCP OAuth plus agent-local flyctl installation, CLI command discovery, gated execution, and per-user credential setup.",
+  "author": {
+    "name": "Mohammed Mansour",
+    "email": "mohammed@qr-oo.com"
+  },
+  "keywords": [
+    "qumi",
+    "fly.io",
+    "flyctl",
+    "mcp",
+    "codex",
+    "claude",
+    "devops"
+  ],
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json"
+}

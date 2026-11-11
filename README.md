@@ -1,4 +1,4 @@
-# QUMI Dev Tools — Depot Bridge
+# QUMI Dev Tools — Engineering Bridges
 
 Official QUMI engineering plugin source for **QUMI Depot Bridge v0.4.0**.
 
@@ -48,6 +48,12 @@ Never paste secrets into chat, issue comments, PRs, MCP arguments, logs, or file
 A second marketplace plugin, [QUMI IONOS Bridge](plugins/qumi-ionos-bridge/README.md), dynamically discovers the full official **IONOS Hosting MCP** tool catalog. Agents can inspect and execute authorized tools for domains, DNS, SSL, webhosting, VPS, dedicated hosting and BSS; additional tools appear automatically as upstream MCP capabilities change. Optional Cloudflare MCP forwarding uses separate per-user credentials. Mutable operations require independent one-time operator approval.
 
 No provider PAT, client domain, account, or personal MCP server URL is committed. See [the operator setup instructions](plugins/qumi-ionos-bridge/README.md).
+
+## QUMI FLY BRIDGE (v0.1.0)
+
+[QUMI FLY BRIDGE](plugins/qumi-fly-bridge/README.md) integrates Fly.io's official [OAuth MCP](https://mcp.fly.io) with agent-local flyctl installation, dynamic CLI help/command discovery, and plan-and-approve execution. It does not bundle personal Fly apps, organizations or tokens. Fly MCP tools are exposed dynamically by Fly.io and bounded by each operator's OAuth consent; the CLI execution surface requires separate authorization for changes.
+
+See the [Codex setup](plugins/qumi-fly-bridge/deploy/CODEX-IMPORT.md) and [Claude setup](plugins/qumi-fly-bridge/deploy/CLAUDE-IMPORT.md). CLI tokens are provisioned privately using Fly auth login, a supported platform secret store, or the per-user encrypted vault.
 
 ## Status and licensing
 
