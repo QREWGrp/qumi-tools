@@ -12,7 +12,7 @@ rl.on('line',async line=>{
  if(msg.id===undefined)return;
  try{
   switch(msg.method){
-   case 'initialize':prompts.initialize(msg.params);reply(msg.id,{protocolVersion:msg.params?.protocolVersion||'2025-06-18',capabilities:{tools:{listChanged:false}},serverInfo:{name:'qumi-ionos-bridge',version:'0.1.1'}});return;
+   case 'initialize':prompts.initialize(msg.params);reply(msg.id,{protocolVersion:msg.params?.protocolVersion||'2025-06-18',capabilities:{tools:{listChanged:false}},serverInfo:{name:'qumi-ionos-bridge',version:'0.2.1'}});return;
    case 'ping':reply(msg.id,{});return;
    case 'tools/list':reply(msg.id,{tools:await registeredTools()});return;
    case 'tools/call':{

@@ -1,4 +1,4 @@
-# QUMI IONOS Bridge v0.1.1
+# QUMI IONOS Bridge v0.2.1
 
 **Publisher:** Qumi Teknolojis (trading name of QROO Inc.) · **Developer:** Mohammed Mansour  
 **Sites:** https://qumi.app · https://qr-oo.com · **Support:** support@qr-oo.com  

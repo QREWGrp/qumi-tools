@@ -23,7 +23,7 @@ let id=1;
 async function initialize(provider){
  const prior=SESSION.get(provider);const c=getProviderConfig(provider);
  if(prior&&prior.endpoint===c.endpoint&&prior.source===c.source)return prior.session;
- const response=await send(provider,{jsonrpc:'2.0',id:id++,method:'initialize',params:{protocolVersion:PROTOCOL,capabilities:{},clientInfo:{name:'qumi-ionos-bridge',version:'0.1.0'}}});
+ const response=await send(provider,{jsonrpc:'2.0',id:id++,method:'initialize',params:{protocolVersion:PROTOCOL,capabilities:{},clientInfo:{name:'qumi-ionos-bridge',version:'0.2.1'}}});
  const session=response.session;
  SESSION.set(provider,{session,endpoint:c.endpoint,source:c.source});
  // MCP clients notify initialized; some stateless gateways reject notifications without a response.

@@ -15,7 +15,7 @@ export const STATIC_TOOLS=[
  {name:'ionos_invoke_tool',description:'Invoke ANY dynamically discovered upstream MCP tool. Read-only calls execute; state-changing calls require exact one-time local operator approval',inputSchema:{type:'object',properties:{provider:{type:'string',enum:['ionos','cloudflare'],default:'ionos'},name:{type:'string'},arguments:{type:'object',additionalProperties:true},approval_id:{type:'string'},dry_run:{type:'boolean'}},required:['name']}}];
 const validProvider=p=>['ionos','cloudflare'].includes(p)?p:'ionos';
 export async function dispatch(name,args={}){
- if(name==='ionos_bridge_status')return {bridge:'qumi-ionos-bridge',version:'0.2.0',providers:configStatus(),tool_mode:process.env.QUMI_IONOS_TOOL_MODE==='eager'?'eager':'dynamic',required_configuration:'IONOS hosted MCP Personal Access Token and server URL, provided per user',note:'Status does not validate live authorization; call ionos_discover_tools to test upstream'};
+ if(name==='ionos_bridge_status')return {bridge:'qumi-ionos-bridge',version:'0.2.1',providers:configStatus(),tool_mode:process.env.QUMI_IONOS_TOOL_MODE==='eager'?'eager':'dynamic',required_configuration:'IONOS hosted MCP Personal Access Token and server URL, provided per user',note:'Status does not validate live authorization; call ionos_discover_tools to test upstream'};
  if(name==='ionos_secure_setup'){return dispatch('ionos_credential_request',args);}
  if(name==='ionos_credential_request'){
   const provider=validProvider(args.provider);

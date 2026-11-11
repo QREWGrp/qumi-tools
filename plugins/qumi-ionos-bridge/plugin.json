@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "qumi-ionos-bridge",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "QUMI's portable IONOS Hosting MCP gateway: dynamic discovery of every upstream tool, safe per-agent PAT provisioning, read-only default, approved mutations and optional Cloudflare MCP federation.",
   "author": {
     "name": "Mohammed Mansour"

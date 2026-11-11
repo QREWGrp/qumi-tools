@@ -62,7 +62,7 @@ All three bridges now share the same **MCP URL-mode credential question** behavi
 | Bridge | Release | Per-user credentials |
 |---|---|---|
 | [Depot](plugins/qumi-depot-bridge/README.md) | 0.5.0 | DEPOT_TOKEN, DEPOT_API_KEY, DEPOT_GIT_KEY |
-| [IONOS](plugins/qumi-ionos-bridge/README.md) | 0.2.0 | IONOS Hosting MCP PAT, optional Cloudflare MCP token |
+| [IONOS](plugins/qumi-ionos-bridge/README.md) | 0.2.1 | IONOS Hosting MCP PAT, optional Cloudflare MCP token |
 | [Fly](plugins/qumi-fly-bridge/README.md) | 0.2.0 | Fly CLI API token; official Fly MCP uses OAuth |
 
 Agents invoke the bridge credential-request tool when authentication is missing. Clients supporting MCP URL elicitation display a user question linking to a secure, per-user browser input. Other clients receive a temporary secure URL fallback. **The operator types the secret only in the protected browser page, never in chat or an MCP argument.** The page encrypts its answer using one-time RSA-OAEP/AES-GCM before local submission. The bridge persists AES-256-GCM/scrypt-encrypted credentials outside Git in the user profile. Only non-secret encrypted-record fingerprints may appear in audit receipts.

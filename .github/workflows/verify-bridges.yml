@@ -1,0 +1,50 @@
+name: QUMI Bridge Source Tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/qumi-depot-bridge/**'
+      - 'plugins/qumi-ionos-bridge/**'
+      - 'plugins/qumi-fly-bridge/**'
+      - '.agents/plugins/marketplace.json'
+      - '.github/workflows/verify-bridges.yml'
+  pull_request:
+    paths:
+      - 'plugins/qumi-depot-bridge/**'
+      - 'plugins/qumi-ionos-bridge/**'
+      - 'plugins/qumi-fly-bridge/**'
+      - '.agents/plugins/marketplace.json'
+jobs:
+  source-verification:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate manifest and package versions
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const items = JSON.parse(fs.readFileSync('.agents/plugins/marketplace.json','utf8')).plugins;
+          const required=['qumi-depot-bridge','qumi-ionos-bridge','qumi-fly-bridge'];
+          for (const name of required) {
+            const item=items.find(p=>p.name===name);
+            if(!item)throw new Error('Missing '+name);
+            const manifest=JSON.parse(fs.readFileSync(item.source.path+'/plugin.json','utf8'));
+            const overlay=JSON.parse(fs.readFileSync(item.source.path+'/.codex-plugin/plugin.json','utf8'));
+            if(manifest.name!==name || overlay.version!==manifest.version)throw new Error('Manifest drift for '+name);
+          }
+          JS
+      - name: Run credential, MCP and CLI regression tests (no real credentials)
+        run: |
+          set -eu
+          node plugins/qumi-depot-bridge/tests/smoke.mjs
+          node plugins/qumi-depot-bridge/tests/integration-local.mjs
+          node plugins/qumi-depot-bridge/tests/integration-v040.mjs
+          node --test plugins/qumi-depot-bridge/tests/elicitation.test.mjs plugins/qumi-depot-bridge/tests/secure-question.test.mjs
+          node plugins/qumi-ionos-bridge/tests/smoke.mjs
+          node --test plugins/qumi-ionos-bridge/tests/elicitation.test.mjs plugins/qumi-ionos-bridge/tests/secure-question.test.mjs plugins/qumi-ionos-bridge/tests/upstream.mjs
+          node --test plugins/qumi-fly-bridge/tests/elicitation.test.mjs plugins/qumi-fly-bridge/tests/secure-question.test.mjs plugins/qumi-fly-bridge/tests/runtime.test.mjs
