@@ -93,5 +93,5 @@ export function commitReceipt(receipt,{repoRoot,confirmed=false}={}){
  }catch(e){try{cp(['reset','--',pathArg]);}catch{}throw e;}
 }
 export function portableVaultStatus(){const r=readVault();return {provider:'scrypt + AES-256-GCM',configured:!!r,
-  keyNames:'never exposed until operator unlock',vault_location:vaultFile(),locked:true,
-  note:'Provision or rotate using the operator-only local terminal. Vault unlock never occurs through MCP/chat.'};}
+  keyNames:'never exposed until operator unlock',vault_location:vaultFile(),locked:!(r&&process.env.VAULT_PASSPHRASE),
+  note:'Provision, rotate or unlock only through the encrypted URL-mode credential question or the operator-only local terminal. Plaintext secrets never pass through MCP arguments or chat.'};}

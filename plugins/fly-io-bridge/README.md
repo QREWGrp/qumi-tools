@@ -31,8 +31,8 @@ The official endpoint is provider-wide and not personalized; **each user's OAuth
 ### Codex (marketplace)
 
 ```bash
-codex plugin marketplace add QREWGrp/qumi-tools
-# Install 'Fly.io Bridge' from QUMI Engineering in the Plugins Directory
+codex plugin marketplace add QREWGrp/qumi-tools --ref main --sparse .agents/plugins --sparse plugins
+# Install 'Fly.io Bridge' from the Engineering Bridges marketplace
 codex mcp add fly-mcp --url https://mcp.fly.io
 codex mcp login fly-mcp
 codex mcp list
@@ -60,7 +60,7 @@ Manual operator alternative: follow Fly's [official installation guide](https://
 
 **For official Fly MCP, no API key is required.** When an agent needs MCP access it asks: "Would you like to authorize your Fly.io organization through Fly's browser-based OAuth?" The operator consents directly in their client browser. Revoke consent under Fly Account → MCP Clients.
 
-**For flyctl**, use `fly auth login` interactively or supply `FLY_API_TOKEN` using an approved agent secret manager. Operators who prefer an encrypted user-specific vault can run:
+**For flyctl**, use `fly auth login` interactively or supply `FLY_API_TOKEN` using an approved agent secret manager. To store a token in an encrypted user-specific vault, the **primary path** is `fly_credential_request` (CLI mode): it opens the same URL-mode encrypted browser question as the other bridges. Operators who prefer a terminal can instead run:
 
 ```bash
 node bin/credentials.mjs store
@@ -70,7 +70,7 @@ The helper requests the token and passphrase using **hidden terminal input**, en
 
 A local non-secret rotation receipt is written outside the repository. It records the hash of randomized ciphertext (never a direct hash of the raw token). Operator revocation at Fly is separately required if an old token is compromised. Never commit the vault, ciphertext, passphrase or raw token. Receipt commit, if desired, requires a separate operator-reviewed change.
 
-The agent tool `fly_credential_request` returns a **question asking permission to connect**, never a form for entering tokens into chat. This works across Codex, Claude, and other clients even when the host has no custom elicitation UI.
+The agent tool `fly_credential_request` never asks for tokens in chat. In `mcp` mode it points to Fly's official OAuth flow; in CLI mode it returns a URL-mode secure question whose link also works as a plain localhost URL when the host has no elicitation UI.
 
 ## Agent workflow and tools
 

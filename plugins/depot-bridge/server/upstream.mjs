@@ -25,7 +25,7 @@ async function withClient(fn){
  const bearer=process.env.QUMI_DEPOT_UPSTREAM_BEARER_TOKEN||'';
  const opts=bearer?{requestInit:{headers:{Authorization:`Bearer ${bearer}`}}}:{};
  const transport=new StreamableHTTPClientTransport(url,opts);
- const client=new Client({name:'depot-bridge',version:'0.3.0'},{capabilities:{}});
+ const client=new Client({name:'depot-bridge',version:'1.0.0-rc'},{capabilities:{}});
  try{await client.connect(transport);return await fn(client);}finally{await client.close();}
 }
 export async function upstreamTools(){

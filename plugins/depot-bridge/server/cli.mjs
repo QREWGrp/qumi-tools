@@ -60,7 +60,7 @@ function identity(){return process.env.QUMI_AGENT_ID||'mcp-client';}
 function evidenceDir(){const root=process.env.QUMI_DEPOT_EVIDENCE_DIR;if(!root||!path.isAbsolute(root))throw new Error('Set absolute QUMI_DEPOT_EVIDENCE_DIR for CLI receipts');fs.mkdirSync(root,{recursive:true});return root;}
 function emitReceipt(job){const dir=evidenceDir();const file=path.join(dir,`${job.id}.json`);fs.writeFileSync(file,JSON.stringify(job,null,2),{flag:'wx',mode:0o600});return {file,sha256:crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')};}
 export function catalog(){return {
-   version:'0.4.0',mode:'dynamic installed CLI --help + guarded command runner',
+   version:'1.0.0-rc',mode:'dynamic installed CLI --help + guarded command runner',
    sdkTools:['list_projects','list_builds','get_build','get_build_steps','get_build_step_logs'],
    cliTools:['depot_cli_detect','depot_cli_install_plan','depot_cli_install','depot_cli_catalog','depot_cli_scan','depot_cli_help','depot_cli_run','depot_cli_version'],
    readOnlyPaths:[...READ_ONLY].sort(),

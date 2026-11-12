@@ -50,7 +50,7 @@ A separate secure question supports **unlock** and **clear saved credentials**. 
 
 Prerequisites: Node.js 20+ and npm installed on the agent host. Official installation: https://docs.npmjs.com/cli/v11/configuring-npm/install/. For npm v11, use a supported Node.js version. Check with `npm_bridge_status`.
 
-The plugin's `mcp.json` and `.mcp.json` contain a generic local MCP `stdio` launcher: `node ${PLUGIN_ROOT}/server/index.mjs`. No Windows VHost or fixed user path is needed. The Codex marketplace is at `QREWGrp/qumi-tools` and will list four plugins after publication.
+The plugin's `mcp.json` and `.mcp.json` contain a generic local MCP `stdio` launcher: `node ${PLUGIN_ROOT}/server/index.mjs`. No Windows VHost or fixed user path is needed. The Engineering Bridges marketplace at `QREWGrp/qumi-tools` (`.agents/plugins/marketplace.json`) lists all four bridges: DEPOT, IONOS, Fly.io and NPM.
 
 Specify an **absolute working directory** for each requested npm command. Operations do not silently run inside the plugin source directory. The run tool avoids an arbitrary OS shell: arguments are passed to the local npm executable as an array. On Windows it uses `node <installed npm-cli.js>` rather than an interpolated `npm.cmd` shell command.
 
@@ -72,6 +72,6 @@ The `npm_cli_install_plan` / `npm_cli_install` tools can install `npm@11` as a u
 
 ## Distribution & acceptance
 
-Published source should be installed through QUMI Engineering GitHub marketplace, not the legacy personal plugin URL that previously returned 404 in Codex. Git pushes do **not** guarantee immediate refresh in an installed desktop client; use the supported marketplace upgrade/sync and restart MCP processes if required. Host-specific credential question UI is not identical in every client.
+Published source should be installed through the Engineering Bridges Git marketplace, not the legacy personal plugin URL that previously returned 404 in Codex. Git pushes do **not** guarantee immediate refresh in an installed desktop client; use the supported marketplace upgrade/sync and restart MCP processes if required. Host-specific credential question UI is not identical in every client.
 
 **Validation:** source-level MCP tests, simulated registry credential encryption, local execution and safety tests. Live npm publishing, actual Windows/macOS client UI, third-party registry access and automatic workspace sync must be verified under each engineer's own authorization.

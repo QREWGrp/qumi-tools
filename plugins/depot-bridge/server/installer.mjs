@@ -52,7 +52,7 @@ export function selectAsset(release,spec=platformSpec()){
  return {tag:release.tag_name,version,name,url:u.toString(),sha256:asset.digest.slice(7).toLowerCase(),size:asset.size};
 }
 async function json(url){
- const response=await fetch(url,{headers:{Accept:'application/vnd.github+json','User-Agent':'depot-bridge/0.4.0'},signal:AbortSignal.timeout(15000)});
+ const response=await fetch(url,{headers:{Accept:'application/vnd.github+json','User-Agent':'depot-bridge/1.0.0-rc'},signal:AbortSignal.timeout(15000)});
  if(!response.ok)throw Error(`GitHub release metadata request failed (${response.status})`);
  return response.json();
 }
@@ -72,7 +72,7 @@ export async function planInstall({scope='project',version}={}){
   note:'Operator approval and QUMI_ALLOW_AGENT_CLI_INSTALL=1 required. The installer verifies GitHub asset SHA-256 and never pipes downloaded scripts into a shell.'};
 }
 async function download(asset,file){
- const response=await fetch(asset.url,{headers:{'User-Agent':'depot-bridge/0.4.0'},signal:AbortSignal.timeout(90000)});
+ const response=await fetch(asset.url,{headers:{'User-Agent':'depot-bridge/1.0.0-rc'},signal:AbortSignal.timeout(90000)});
  if(!response.ok)throw Error(`Depot download failed (${response.status})`);
  const chunks=[];let length=0;
  for await(const chunk of response.body){length+=chunk.length;if(length>MAX_ARCHIVE)throw Error('Depot archive exceeds maximum size');chunks.push(chunk);}

@@ -16,6 +16,7 @@ on:
       - 'plugins/fly-io-bridge/**'
       - 'plugins/npm-bridge/**'
       - '.agents/plugins/marketplace.json'
+      - '.github/workflows/verify-bridges.yml'
 jobs:
   source-tests:
     runs-on: ubuntu-latest
@@ -42,8 +43,22 @@ jobs:
             const b=JSON.parse(fs.readFileSync(root+'/.codex-plugin/plugin.json','utf8'));
             if(a.name!==name||a.version!=='1.0.0-rc'||b.version!==a.version)throw Error('Version/name drift '+name);
             if(!fs.existsSync(root+'/FIRST-RUN.md'))throw Error('Missing setup '+name);
+            if(!root.startsWith('./plugins/'))throw Error('Plugin path outside plugins/ '+name);
+            const runtime=JSON.parse(fs.readFileSync(root+'/server/package.json','utf8'));
+            if(runtime.version!==a.version)throw Error('Runtime package version drift '+name);
+            for(const f of ['.mcp.json','mcp.json'])JSON.parse(fs.readFileSync(root+'/'+f,'utf8'));
           }
           JS
+      - name: Refuse bundled credentials and vault files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-files | grep -Ei '(\.vault\.json|vault\.aes256gcm\.json|\.dpapi$|\.pem$|\.key$|\.p12$|\.pfx$|(^|/)\.npmrc$|(^|/)\.env(\.|$))' | grep -v '\.env\.example$'; then
+            echo 'Credential or vault file is tracked'; exit 1
+          fi
+          if git grep -nIE '(ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{40,}|npm_[A-Za-z0-9]{36}|FlyV1 fm[0-9]|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----[A-Za-z0-9+/=])' -- . ':!.github/workflows/verify-bridges.yml'; then
+            echo 'Possible live secret found'; exit 1
+          fi
       - name: Run simulated MCP, CLI and encrypted-question regressions
         shell: bash
         run: |

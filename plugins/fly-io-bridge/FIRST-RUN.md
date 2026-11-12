@@ -7,7 +7,13 @@
 
 ## 1. Install / enable
 
-Open the Git-backed **Engineering Bridges** marketplace in your agent client (repository `QREWGrp/qumi-tools`, branch `main`, sparse paths `.agents/plugins` and `plugins`) and select **Fly.io Bridge**. The local MCP launcher runs with Node.js 20+ and uses your agent's own OS account. Check the plugin status and exposed tools before proceeding. No shared credential is bundled.
+In Codex **Settings → Plugins → Add marketplace**, add the Git-backed **Engineering Bridges** marketplace:
+
+- **Source:** `https://github.com/QREWGrp/qumi-tools`
+- **Git ref:** `main`
+- **Sparse paths:** `.agents/plugins` and `plugins` on two separate lines, or leave sparse paths empty.
+
+The manifest is `.agents/plugins/marketplace.json`. Select **Fly.io Bridge**. The local MCP launcher runs with Node.js 20+ and uses your agent's own OS account. Check the plugin status and exposed tools before proceeding. No shared credential, fixed provider endpoint or personal MCP URL is bundled.
 
 ## 2. Connect with a secure question
 

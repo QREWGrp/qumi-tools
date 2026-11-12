@@ -1,12 +1,12 @@
 {
   "name": "ionos-bridge-runtime",
   "private": true,
-  "version": "0.2.0",
+  "version": "1.0.0-rc",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "test": "node ../tests/smoke.mjs && node ../tests/upstream.mjs"
+    "test": "cd .. && node --test tests/elicitation.test.mjs tests/secure-question.test.mjs tests/smoke.mjs tests/upstream.mjs tests/vault-preferences.test.mjs"
   }
 }
