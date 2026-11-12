@@ -69,13 +69,18 @@ export function saveReceipt(receipt){
  fs.writeFileSync(file,JSON.stringify(receipt,null,2)+'\n',{flag:'wx',mode:0o600});
  return file;
 }
-function git(...args){return execFileSync('git',args,{encoding:'utf8',timeout:15000,maxBuffer:64*1024});}
+export function sanitizedChildEnv(source=process.env){
+ const env={...source};
+ for(const key of ['VAULT_PASSPHRASE','DEPOT_TOKEN','DEPOT_API_KEY','DEPOT_GIT_KEY','QUMI_MCP_BEARER_TOKEN'])delete env[key];
+ return env;
+}
+function git(...args){return execFileSync('git',args,{encoding:'utf8',timeout:15000,maxBuffer:64*1024,env:sanitizedChildEnv()});}
 export function commitReceipt(receipt,{repoRoot,confirmed=false}={}){
  if(!confirmed)throw Error('Explicit operator confirmation is required to commit credential rotation evidence');
  if(!path.isAbsolute(repoRoot||''))throw Error('A verified absolute Git repository root is required');
  const root=fs.realpathSync(repoRoot);
  if(!fs.existsSync(path.join(root,'.git')))throw Error('Evidence target is not a Git checkout');
- const cp=(args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',timeout:15000,maxBuffer:64*1024}).trim();
+ const cp=(args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',timeout:15000,maxBuffer:64*1024,env:sanitizedChildEnv()}).trim();
  const repoTop=fs.realpathSync(cp(['rev-parse','--show-toplevel']));if(repoTop!==root)throw Error('Evidence destination must be the Git repository root');
  if(cp(['diff','--cached','--name-only']))throw Error('Pre-existing staged changes; refusing to include them in receipt commit');
  const relative=path.join('evidence','depot','credential-rotations',`${receipt.event_id}.json`);
@@ -92,6 +97,13 @@ export function commitReceipt(receipt,{repoRoot,confirmed=false}={}){
   return {committed:true,sha,path:pathArg,ciphertext_sha256:receipt.ciphertext_sha256,secret_material_committed:false};
  }catch(e){try{cp(['reset','--',pathArg]);}catch{}throw e;}
 }
-export function portableVaultStatus(){const r=readVault();return {provider:'scrypt + AES-256-GCM',configured:!!r,
-  keyNames:'never exposed until operator unlock',vault_location:vaultFile(),locked:true,
-  note:'Provision or rotate using the operator-only local terminal. Vault unlock never occurs through MCP/chat.'};}
+export function portableVaultStatus(){
+ const record=readVault();
+ let unlocked=false;
+ if(record&&process.env.VAULT_PASSPHRASE){
+  try{unseal(record,process.env.VAULT_PASSPHRASE);unlocked=true;}catch{}
+ }
+ return {provider:'scrypt + AES-256-GCM',configured:!!record,
+  keyNames:'never exposed until operator unlock',vault_location:vaultFile(),locked:!unlocked,unlock_verified:unlocked,
+  note:'Vault unlock is reported only after successful authenticated decryption. Use a protected operator question or terminal; never pass secrets through agent chat.'};
+}

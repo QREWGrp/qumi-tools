@@ -7,13 +7,21 @@
 
 ## 1. Install / enable
 
-Open the Git-backed **Engineering Bridges** marketplace in your agent client (repository `QREWGrp/qumi-tools`, branch `main`, sparse paths `.agents/plugins` and `plugins`) and select **NPM Bridge**. The local MCP launcher runs with Node.js 20+ and uses your agent's own OS account. Check the plugin status and exposed tools before proceeding. No shared credential is bundled.
+In Codex **Settings → Plugins → Add marketplace**, add the Git-backed **Engineering Bridges** marketplace:
+
+- **Source:** `https://github.com/QREWGrp/qumi-tools`
+- **Git ref:** `main`
+- **Sparse paths:** `.agents/plugins` and `plugins` on two separate lines, or leave sparse paths empty.
+
+The manifest is `.agents/plugins/marketplace.json`. Select **NPM Bridge**. The local MCP launcher runs with Node.js 20+ and uses your agent's own OS account. Check the plugin status and exposed tools before proceeding. No shared credential, fixed provider endpoint or personal MCP URL is bundled.
 
 ## 2. Connect with a secure question
 
+**Default: session-only.** The npm token you enter is held only in this MCP runtime's memory and is gone when the agent session ends. No vault, file or `VAULT_PASSPHRASE` is needed. Choose **Store encrypted for future sessions** in the secure question only if you want persistence; the `VAULT_PASSPHRASE` options below apply only then, or when unlocking a vault you saved earlier.
+
 Request a credential using the plugin's credential-question tool. The MCP client displays a URL-mode secure question if supported; otherwise the operator opens the short-lived localhost URL from the **same machine**. Enter tokens only in that protected form, never in chat, arguments, Git, issues or logs. The browser encrypts the response before local submission.
 
-**Choose where to keep your agent-specific `VAULT_PASSPHRASE`:**
+**If you opt in to an encrypted vault, choose where to keep your agent-specific `VAULT_PASSPHRASE`:**
 
 - **Saved Passwords:** Use the browser / OS password manager, subject to the manager's own save/autofill UI. This is an operator-approved unlock on each new agent session; the bridge **cannot silently read your password manager**. Temporary random localhost ports may prevent automatic autofill, so a manual saved entry might be necessary.
 - **Cloud Personal Vault:** Add a secret named **`VAULT_PASSPHRASE`** to the **current agent's own secret variables**, scoped to that agent and not shared across accounts. The agent runtime reads only `process.env.VAULT_PASSPHRASE` after your secrets manager injects it. This plugin **does not have permission to write to an arbitrary cloud vault**; finish setup inside your provider's own vault UI and restart the agent.

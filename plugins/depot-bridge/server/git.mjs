@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {redact,secretStatus,getSecret,vaultDir} from './vault.mjs';
-import {readVault,unseal} from './portable-vault.mjs';
+import {readVault,unseal,sanitizedChildEnv} from './portable-vault.mjs';
 const run=promisify(execFile);
 const deploy=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../deploy');
 const askpass=path.join(deploy,process.platform==='win32'?'git-askpass.cmd':'git-askpass-unix.sh');
@@ -18,7 +18,7 @@ function validateOrigin(remote){
  if(u.pathname.replace(/^\//,'').replace(/\.git$/i,'').toLowerCase()!==expectedRepo)throw new Error('Git origin repository is not the approved QUMI repository');
  return u;
 }
-async function origin(){const {stdout}=await run('git',['remote','get-url','origin'],{cwd:checkoutRoot(),timeout:15000,windowsHide:true});return validateOrigin(stdout.trim());}
+async function origin(){const {stdout}=await run('git',['remote','get-url','origin'],{cwd:checkoutRoot(),timeout:15000,windowsHide:true,env:sanitizedChildEnv()});return validateOrigin(stdout.trim());}
 function gitKeyAvailable(){
  if(!!process.env.DEPOT_GIT_KEY)return true;
  try{if(readVault()&&process.env.VAULT_PASSPHRASE)return !!unseal(readVault(),process.env.VAULT_PASSPHRASE).DEPOT_GIT_KEY;}catch{}
@@ -30,7 +30,7 @@ async function gitEnv(){
  const secret=process.env.DEPOT_GIT_KEY||unlocked.DEPOT_GIT_KEY||await getSecret('DEPOT_GIT_KEY');
  if(!secret)throw new Error('DEPOT_GIT_KEY is not provisioned in this agent environment; use operator-only credential provisioning');
  if(process.platform!=='win32')fs.chmodSync(askpass,0o700);
- return {...process.env,VAULT_PASSPHRASE:'',DEPOT_GIT_KEY:secret,GIT_ASKPASS:askpass,GIT_TERMINAL_PROMPT:'0',QUMI_GIT_ASKPASS_ACTIVE:'1',
+ return {...sanitizedChildEnv(),DEPOT_GIT_KEY:secret,GIT_ASKPASS:askpass,GIT_TERMINAL_PROMPT:'0',QUMI_GIT_ASKPASS_ACTIVE:'1',
   QUMI_NODE_EXEC:process.execPath,QUMI_GIT_ASKPASS_SCRIPT:portableHelper,
   GIT_CONFIG_COUNT:'1',GIT_CONFIG_KEY_0:'credential.https://github.com.username',GIT_CONFIG_VALUE_0:'x-access-token'};
 }

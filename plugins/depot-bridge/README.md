@@ -10,7 +10,7 @@
 **Publisher:** Mohammed Mansour · Qumi Teknolojis (trading name of QROO Inc.)  
 **Websites:** https://qumi.app · https://qr-oo.com  
 **Support:** support@qr-oo.com  
-**Audience:** Internal QUMI engineering teams only. Not a public plugin.
+**Distribution:** Public source in the Engineering Bridges marketplace (`QREWGrp/qumi-tools`). The source is public; credentials are not. No tokens, Git keys, vault passphrases, customer domains or personal MCP URLs are bundled, and each operator supplies their own.
 
 ## What is working, and what is not
 
@@ -56,7 +56,9 @@ node deploy/agent-setup.mjs install --project
 
 ## Operator question → protected entry → encryption → receipt commit
 
-**Never ask the operator to paste a Depot token or Git key into a Codex/Claude/ChatGPT chat answer.** The MCP specification forbids collecting API keys through ordinary in-band form elicitation. Instead, the agent calls `credential_request` and asks a **non-secret question** like: “Provision/rotate DEPOT_GIT_KEY now? Please run the secure local terminal helper.” The user then enters the key privately in a terminal (characters hidden) or an approved out-of-band HTTPS credential portal if their organization has deployed one. A URL is only returned if `QUMI_CREDENTIAL_PORTAL_URL` is explicitly configured; this package does not claim to host that portal.
+**Never ask the operator to paste a Depot token or Git key into a Codex/Claude/ChatGPT chat answer.** The MCP specification forbids collecting API keys through ordinary in-band form elicitation. Instead, the agent calls `credential_request`. This is the **primary path on every platform**: the bridge opens a short-lived, single-use localhost question, the MCP client shows it as a URL-mode elicitation where supported, and the operator answers in the browser, which encrypts the answer (RSA-OAEP/AES-GCM) before local submission. The answer is stored as an AES-256-GCM vault outside Git. Use `action: "unlock"` to unlock an existing vault for the current MCP runtime only. Cloud agents that cannot reach the operator's localhost must use their platform secret manager or an approved HTTPS credential portal.
+
+The hidden-terminal helper below is the **alternative** for operators who prefer a local terminal or need scripted rotation with Git receipts. Windows DPAPI remains a legacy alternative.
 
 For a portable encrypted vault on macOS, Linux or Windows:
 

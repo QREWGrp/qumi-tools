@@ -12,7 +12,7 @@ const MAX_BYTES=32_768;
 const TTL_MS=5*60*1000;
 const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 const b64=s=>Buffer.from(s).toString('base64');
-function renderPage({title,description,fields,publicDer,csrf}){
+function renderPage({title,description,fields,publicDer,csrf,nonce}){
  const hasVaultPassphrase=fields.some(f=>f.name==='passphrase');
  const sourceChoice=hasVaultPassphrase?`<fieldset class="vault-choice"><legend>Where will you keep your VAULT_PASSPHRASE?</legend><label><input type="radio" name="vault_destination" value="saved_passwords" checked> Saved Passwords (browser or OS password manager)</label><small>The agent cannot silently read your password manager. On each unlock, you approve autofill or enter the passphrase again. Temporary localhost origins may need manual saving.</small><label><input type="radio" name="vault_destination" value="cloud_personal_vault"> Cloud Personal Vault variable</label><small>In the current agent's private secrets settings add <code>VAULT_PASSPHRASE</code>, then restart the agent/MCP runtime. This page cannot write to a cloud vault without a verified integration.</small></fieldset>`:'';
  const fieldMarkup=fields.map(f=>`<label for="${esc(f.name)}">${esc(f.label)}</label><input id="${esc(f.name)}" name="${esc(f.name)}" type="${f.secret?'password':f.type==='url'?'url':'text'}" ${f.secret?(f.name==='passphrase'&&fields.length===1?'autocomplete="current-password"':'autocomplete="new-password"'):'autocomplete="off"'} required maxlength="${f.max||8192}" placeholder="${esc(f.placeholder||'')}" />`).join('\n');
@@ -29,7 +29,7 @@ function renderPage({title,description,fields,publicDer,csrf}){
   }catch(error){feedback.textContent='Setup failed: '+error.message;form.querySelector('button').disabled=false;}
  });
  document.querySelector('#cancel').onclick=async()=>{await fetch('/cancel',{method:'POST',headers:{'X-QUMI-CSRF':${JSON.stringify(csrf)}}});form.reset();form.hidden=true;feedback.textContent='Cancelled';};`;
- return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${esc(title)} — secure question</title><style>body{font:16px system-ui,sans-serif;max-width:560px;margin:6vh auto;padding:0 20px;color:#172234;background:#f7f8fa}main{padding:28px;background:white;border:1px solid #ddd;border-radius:16px}label{display:block;font-weight:600;margin:16px 0 6px}fieldset.vault-choice{border:1px solid #dce2ea;border-radius:10px;padding:12px;margin-top:20px}fieldset.vault-choice label{font-weight:500;margin:10px 0}fieldset.vault-choice input{width:auto;vertical-align:middle}fieldset.vault-choice small{display:block;margin-left:22px}input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #999;border-radius:8px;font:inherit}button{border-radius:9px;padding:12px 18px;margin:20px 8px 0 0;background:#14243d;color:white;border:0;cursor:pointer}#cancel{background:#e5e7eb;color:#111}#status{min-height:24px}small{color:#586174}</style></head><body><main><h2>${esc(title)}</h2><p>${esc(description)}</p><small>Only this device can access this temporary localhost form. Credentials are encrypted in your browser before submission; nothing is sent through chat. They are encrypted again at rest, outside Git.</small><form>${fieldMarkup}${sourceChoice}<button type="submit">Encrypt and save</button><button type="button" id="cancel">Cancel</button></form><p id="status" role="status"></p></main><script type="module">${client}</script></body></html>`;
+ return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${esc(title)} — secure question</title><style>body{font:16px system-ui,sans-serif;max-width:560px;margin:6vh auto;padding:0 20px;color:#172234;background:#f7f8fa}main{padding:28px;background:white;border:1px solid #ddd;border-radius:16px}label{display:block;font-weight:600;margin:16px 0 6px}fieldset.vault-choice{border:1px solid #dce2ea;border-radius:10px;padding:12px;margin-top:20px}fieldset.vault-choice label{font-weight:500;margin:10px 0}fieldset.vault-choice input{width:auto;vertical-align:middle}fieldset.vault-choice small{display:block;margin-left:22px}input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #999;border-radius:8px;font:inherit}button{border-radius:9px;padding:12px 18px;margin:20px 8px 0 0;background:#14243d;color:white;border:0;cursor:pointer}#cancel{background:#e5e7eb;color:#111}#status{min-height:24px}small{color:#586174}</style></head><body><main><h2>${esc(title)}</h2><p>${esc(description)}</p><small>Only this device can access this temporary localhost form. Credentials are encrypted in your browser before submission; nothing is sent through chat. They are encrypted again at rest, outside Git.</small><form>${fieldMarkup}${sourceChoice}<button type="submit">Encrypt and save</button><button type="button" id="cancel">Cancel</button></form><p id="status" role="status"></p></main><script type="module" nonce="${nonce}">${client}</script></body></html>`;
 }
 function safeLabel(name){return /^[A-Z0-9_]{2,80}$/.test(name);}
 export async function startSecureQuestion({bridge,credential,description,fields,save}){
@@ -38,7 +38,7 @@ export async function startSecureQuestion({bridge,credential,description,fields,
  const id=`${bridge}:${credential}`;
  if(active.has(id)){const old=active.get(id);return {...old.meta,existing:true};}
  const {publicKey,privateKey}=crypto.generateKeyPairSync('rsa',{modulusLength:2048,publicKeyEncoding:{type:'spki',format:'der'},privateKeyEncoding:{type:'pkcs8',format:'pem'}});
- const csrf=crypto.randomBytes(24).toString('hex');let used=false;let closeTimer;
+ const csrf=crypto.randomBytes(24).toString('hex'),nonce=crypto.randomBytes(16).toString('base64');let used=false;let closeTimer;
  let server;
  const fail=(res,status,msg)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({error:msg}));};
  const close=()=>{active.delete(id);clearTimeout(closeTimer);server.close();};
@@ -48,8 +48,8 @@ export async function startSecureQuestion({bridge,credential,description,fields,
   const origin=req.headers.origin;
   if(origin && origin!==`http://127.0.0.1:${server.address().port}`)return fail(res,403,'Origin denied');
   if(req.method==='GET'&&req.url==='/'){
-   res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"});
-   return res.end(renderPage({title:`${bridge} — ${credential}`,description,fields,publicDer:publicKey,csrf}));
+   res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','X-Content-Type-Options':'nosniff','Content-Security-Policy':`default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`});
+   return res.end(renderPage({title:`${bridge} — ${credential}`,description,fields,publicDer:publicKey,csrf,nonce}));
   }
   if(req.method==='POST'&&['/submit','/cancel'].includes(req.url)){
    if(req.headers['x-qumi-csrf']!==csrf)return fail(res,403,'Invalid request token');

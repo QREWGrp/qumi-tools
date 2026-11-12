@@ -9,7 +9,7 @@ import {catalog as cliCatalog,help as cliHelp,scan as cliScan,cliRun} from './cl
 import {upstreamStatus,upstreamTools,upstreamCall} from './upstream.mjs';
 import {gitAskpassStatus,gitRemoteProbe} from './git.mjs';
 import {planInstall,installCli,locateCli} from './installer.mjs';
-import {portableVaultStatus,CREDENTIALS,readVault,unseal,seal,writeVault,nonSecretReceipt,saveReceipt} from './portable-vault.mjs';
+import {portableVaultStatus,CREDENTIALS,readVault,unseal,seal,writeVault,nonSecretReceipt,saveReceipt,sanitizedChildEnv} from './portable-vault.mjs';
 import {startSecureQuestion} from './secure-question.mjs';
 
 const runFile = promisify(execFile);
@@ -77,8 +77,8 @@ async function buildEnv(p) {
 }
 async function checkout(expectedSha) {
   const root=checkoutRoot();
-  const {stdout:head}=await runFile('git',['rev-parse','HEAD'],{cwd:root,windowsHide:true,timeout:12000});
-  const {stdout:status}=await runFile('git',['status','--porcelain'],{cwd:root,windowsHide:true,timeout:12000});
+  const {stdout:head}=await runFile('git',['rev-parse','HEAD'],{cwd:root,windowsHide:true,timeout:12000,env:sanitizedChildEnv()});
+  const {stdout:status}=await runFile('git',['status','--porcelain'],{cwd:root,windowsHide:true,timeout:12000,env:sanitizedChildEnv()});
   const sha=head.trim();
   const clean=status.trim().length === 0;
   if(expectedSha && sha !== expectedSha) throw new Error('Checkout SHA does not match approved_sha');
@@ -86,7 +86,7 @@ async function checkout(expectedSha) {
 }
 const depotExe = () => locateCli().resolved;
 async function depotVersion(){
-  const {stdout,stderr}=await runFile(depotExe(),['--version'],{windowsHide:true,timeout:15000,env:{...process.env,DEPOT_TOKEN:'',VAULT_PASSPHRASE:''}});
+  const {stdout,stderr}=await runFile(depotExe(),['--version'],{windowsHide:true,timeout:15000,env:sanitizedChildEnv()});
   return {version:(stdout||stderr).trim().slice(0,350)};
 }
 

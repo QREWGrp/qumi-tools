@@ -7,9 +7,17 @@
 
 ## 1. Install / enable
 
-Open the Git-backed **Engineering Bridges** marketplace in your agent client (repository `QREWGrp/qumi-tools`, branch `main`, sparse paths `.agents/plugins` and `plugins`) and select **IONOS Bridge**. The local MCP launcher runs with Node.js 20+ and uses your agent's own OS account. Check the plugin status and exposed tools before proceeding. No shared credential is bundled.
+In Codex **Settings → Plugins → Add marketplace**, add the Git-backed **Engineering Bridges** marketplace:
+
+- **Source:** `https://github.com/QREWGrp/qumi-tools`
+- **Git ref:** `main`
+- **Sparse paths:** `.agents/plugins` and `plugins` on two separate lines, or leave sparse paths empty.
+
+The manifest is `.agents/plugins/marketplace.json`. Select **IONOS Bridge**. The local MCP launcher runs with Node.js 20+ and uses your agent's own OS account. Check the plugin status and exposed tools before proceeding. No shared credential, fixed provider endpoint or personal MCP URL is bundled.
 
 ## 2. Connect with a secure question
+
+IONOS requires two per-agent values: your official IONOS Hosting MCP HTTPS endpoint (`IONOS_MCP_URL`) and a Personal Access Token (`IONOS_PAT`). Both are entered in the secure question or injected by your platform's secret manager; neither is shipped in the plugin. Optional Cloudflare federation uses `QUMI_CLOUDFLARE_MCP_URL` and `QUMI_CLOUDFLARE_MCP_TOKEN` the same way.
 
 Request a credential using the plugin's credential-question tool. The MCP client displays a URL-mode secure question if supported; otherwise the operator opens the short-lived localhost URL from the **same machine**. Enter tokens only in that protected form, never in chat, arguments, Git, issues or logs. The browser encrypts the response before local submission.
 

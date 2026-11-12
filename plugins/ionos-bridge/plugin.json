@@ -4,7 +4,7 @@
     "email": "mohammed@qr-oo.com",
     "name": "Mohammed Mansour"
   },
-  "description": " portable IONOS Hosting MCP gateway: dynamic discovery of every upstream tool, safe per-agent PAT provisioning, read-only default, approved mutations and optional Cloudflare MCP federation.",
+  "description": "Portable IONOS Hosting MCP gateway: dynamic discovery of every upstream tool, safe per-agent PAT provisioning, read-only default, approved mutations and optional Cloudflare MCP federation.",
   "extensions": {
     "com.openai": {
       "interface": {
