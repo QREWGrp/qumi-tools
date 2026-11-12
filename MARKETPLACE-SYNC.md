@@ -1,38 +1,40 @@
-# QUMI Engineering — GitHub marketplace installation and updates
+# Engineering Bridges — Git source of truth and update behavior
 
-Source: [QREWGrp/qumi-dev-tools](https://github.com/QREWGrp/qumi-dev-tools), branch `main`. Manifest: `.agents/plugins/marketplace.json`. The marketplace contains `qumi-depot-bridge`, `qumi-ionos-bridge`, and `qumi-fly-bridge`.
+**Repository:** https://github.com/QREWGrp/qumi-tools  
+**Branch:** `main` · **Manifest:** `.agents/plugins/marketplace.json` · **Marketplace:** `engineering-bridges`
 
-## Local Codex / ChatGPT desktop
+## Codex desktop
 
-In Settings → Plugins → Add marketplace, specify:
+Add marketplace with source `https://github.com/QREWGrp/qumi-tools`, Git ref `main`, and sparse paths `.agents/plugins` and `plugins` (or no sparse filtering).
 
-- Source: `https://github.com/QREWGrp/qumi-dev-tools`
-- Git ref: `main`
-- Sparse paths: two lines, `.agents/plugins` and `plugins`.
-
-CLI equivalent:
+For compatible CLI versions:
 
 ```sh
-codex plugin marketplace add QREWGrp/qumi-dev-tools --ref main --sparse .agents/plugins --sparse plugins
+codex plugin marketplace add QREWGrp/qumi-tools --ref main --sparse .agents/plugins --sparse plugins
 codex plugin marketplace list
-codex plugin marketplace upgrade qumi-engineering
+codex plugin marketplace upgrade engineering-bridges
 ```
 
-The Git-backed marketplace tracks the repository, but **a Git push is not proof that an already running local client has refreshed**. Marketplace `upgrade` explicitly refreshes the Git source; reopen Codex/restart the desktop client if its installed plugin stays stale. Test the MCP `tools/list` result after refreshing.
+Then select **DEPOT Bridge**, **IONOS Bridge**, **Fly.io Bridge**, or **NPM Bridge**.
 
-## ChatGPT workspace-admin GitHub import (automatic daily sync)
+**A Git push does not prove an installed desktop has upgraded.** Refresh the source via the marketplace's upgrade/sync control and restart the agent if tools remain stale. Some client versions may use UI-only controls.
 
-A workspace admin can enable the documented daily synchronization:
+## Workspace-level daily GitHub sync
 
-1. Admin Console → Plugins → Add → **Import marketplace**.
-2. Source: `https://github.com/QREWGrp/qumi-dev-tools`; Path: empty; Branch: `main` (do **not** pin a SHA).
-3. Authorize the GitHub account, complete import, review the role/installation policy and each plugin's required access.
-4. Under Plugins → Marketplaces, verify **automatic daily sync**, inspect status, and use **Sync now** for an immediate refresh.
+An authorized workspace administrator must import the GitHub marketplace under Admin Console → Plugins → Add → Import marketplace. Choose **QREWGrp/qumi-tools**, `main`, no pinned commit SHA, approve GitHub access and review install policy. Confirm the marketplace's actual sync setting/status, and use **Sync now** if available. This source repository cannot activate workspace admin sync on its own.
 
-Repository publication alone does not create this workspace import or authorize individual operators. Imported local-stdio MCP plugins may be Desktop-only; no live hosted endpoint or provider tokens are included.
+## Vault and upgrade guarantees
 
-See [OpenAI help: importing and syncing marketplaces](https://help.openai.com/en/articles/20001504-importing-and-syncing-plugin-marketplaces-from-github) and [Codex CLI marketplace documentation](https://developers.openai.com/plugins/build/plugins).
+Every bridge accepts one per-agent secret variable named **`VAULT_PASSPHRASE`**, injected by the agent's private cloud vault. The same variable name does not imply the same value across agents. Never set it in repository secrets intended for public CI, Git, chat, scripts or logs.
+
+For Saved Passwords, the agent needs operator interaction to unlock; it cannot read the password manager automatically. User-selected storage-source preference is non-secret metadata only.
+
+See [MIGRATION.md](MIGRATION.md) for old→new plugin identities. **Legacy source folders are not listed as installable plugins**. The old private plugin records are not automatically deleted or rewritten; switch your marketplace install to the new RC identity.
 
 ## Acceptance
 
-Verify 3 plugin names and expected versions (Depot 0.5.0, IONOS 0.2.1, Fly 0.2.0), MCP tools/list, secure question delivery, a user-local encrypted vault, and optional provider authentication under the operator's own credentials. Never enter credentials into chat.
+A useful smoke test after installation:
+1. MCP `initialize` / `tools/list` exposes the bridge's actual tools.
+2. Runtime status shows expected version `1.0.0-rc`, CLI/SDK readiness and `VAULT_PASSPHRASE` availability (never its value).
+3. A secure credential question offers **Saved Passwords** and **Cloud Personal Vault**.
+4. Read-only provider operation works using the operator's authorization; mutation approval rejects unmatched operations.

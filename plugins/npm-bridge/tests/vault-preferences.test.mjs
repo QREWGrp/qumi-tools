@@ -1,0 +1,25 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,readFileSync} from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+const root=mkdtempSync(path.join(os.tmpdir(),'bridge-preference-'));
+process.env.XDG_CONFIG_HOME=root;
+process.env.BRIDGE_AGENT_ID='rc-test-agent';
+const {setVaultPreference,vaultPreferenceStatus}=await import('../server/vault-preferences.mjs');
+test('agent-local preference metadata is non-secret',()=>{
+ const secret='TEST_ONLY_VAULT_PASSPHRASE_SHOULD_NEVER_BE_SAVED';
+ process.env.VAULT_PASSPHRASE=secret;
+ const r=setVaultPreference('cloud_personal_vault');
+ assert.equal(r.source,'cloud_personal_vault');
+ assert.equal(r.variable,'VAULT_PASSPHRASE');
+ assert.equal(r.cloud_injection_present,true);
+ const files=path.join(root,'bridge-vault-preferences');
+ const saved=readFileSync(path.join(files,'npm-bridge'+'-rc-test-agent.json'),'utf8');
+ assert(!saved.includes(secret));
+ delete process.env.VAULT_PASSPHRASE;
+ assert.equal(setVaultPreference('saved_passwords').source,'saved_passwords');
+ assert.equal(vaultPreferenceStatus().cloud_injection_present,false);
+ assert.match(vaultPreferenceStatus().action,/secure vault unlock question/);
+ assert.throws(()=>setVaultPreference('public_git_repo'),/Choose/);
+});

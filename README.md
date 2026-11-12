@@ -1,84 +1,41 @@
-# QUMI Dev Tools — Engineering Bridges
+# Engineering Bridges — Depot, IONOS, Fly.io, NPM
+Four portable **1.0.0-rc** developer plugins distributed through the Git-backed marketplace in **QREWGrp/qumi-tools**.
 
-Official QUMI engineering plugin source for **QUMI Depot Bridge v0.5.0**.
+**Developer:** Mohammed Mansour · **Publisher:** Qumi Teknolojis, trading name of QROO Inc.  
+**Websites:** https://qumi.app · https://qr-oo.com · **Support:** support@qr-oo.com
 
-**Publisher:** Qumi Teknolojis, trading name of QROO Inc.  
-**Developer:** Mohammed Mansour  
-**Web:** https://qumi.app · https://qr-oo.com  
-**Support:** support@qr-oo.com
-
-## Codex marketplace
-
-The repository is a Codex marketplace with the supported manifest at `.agents/plugins/marketplace.json`. In a compatible Codex installation:
-
-```sh
-codex plugin marketplace add QREWGrp/qumi-dev-tools
-codex plugin marketplace list
-```
-
-Then select **QUMI Engineering → QUMI Depot Bridge** in the Plugins Directory and install the plugin. The plugin code lives in `plugins/qumi-depot-bridge/`. A repository marketplace is distinct from the separate ChatGPT public plugin directory.
-
-## Depot CLI and MCP
-
-The plugin provides a generic per-agent local MCP server. It can detect the installed Depot CLI, request approval to download and SHA-256 verify the official CLI release, install into a user or project-local tool directory, catalog installed commands, and execute policy-allowed operations. It also exposes build inspection tools through separately provisioned Depot API credentials/SDK and an optional operator-configured upstream MCP adapter.
-
-From `plugins/qumi-depot-bridge/`, run:
-
-```sh
-node deploy/agent-setup.mjs detect
-node deploy/agent-setup.mjs install --project
-```
-
-See [Codex setup](plugins/qumi-depot-bridge/deploy/CODEX-IMPORT.md), [Claude setup](plugins/qumi-depot-bridge/deploy/CLAUDE-IMPORT.md), and [operator guide](plugins/qumi-depot-bridge/README.md).
-
-## Credentials: each user brings their own
-
-No Depot tokens, Git tokens, encryption passphrases, personally hosted MCP URLs, or local binaries are bundled. An authorized operator provisions credentials privately in their environment using an approved secret manager or a hidden terminal command such as:
-
-```sh
-node deploy/operator-credentials.mjs provision DEPOT_TOKEN
-```
-
-For Git access provision `DEPOT_GIT_KEY` separately. A per-user encrypted vault is stored outside the repository. Audit receipts contain only non-secret encrypted-record fingerprints and must never contain plaintext, ciphertext, or hashes of raw tokens. Rotate leaked credentials at the issuer; a Git audit commit is **not** revocation.
-
-Never paste secrets into chat, issue comments, PRs, MCP arguments, logs, or files in this public repository.
-
-## QUMI IONOS Bridge (new)
-
-A second marketplace plugin, [QUMI IONOS Bridge](plugins/qumi-ionos-bridge/README.md), dynamically discovers the full official **IONOS Hosting MCP** tool catalog. Agents can inspect and execute authorized tools for domains, DNS, SSL, webhosting, VPS, dedicated hosting and BSS; additional tools appear automatically as upstream MCP capabilities change. Optional Cloudflare MCP forwarding uses separate per-user credentials. Mutable operations require independent one-time operator approval.
-
-No provider PAT, client domain, account, or personal MCP server URL is committed. See [the operator setup instructions](plugins/qumi-ionos-bridge/README.md).
-
-## QUMI FLY BRIDGE (v0.1.0)
-
-[QUMI FLY BRIDGE](plugins/qumi-fly-bridge/README.md) integrates Fly.io's official [OAuth MCP](https://mcp.fly.io) with agent-local flyctl installation, dynamic CLI help/command discovery, and plan-and-approve execution. It does not bundle personal Fly apps, organizations or tokens. Fly MCP tools are exposed dynamically by Fly.io and bounded by each operator's OAuth consent; the CLI execution surface requires separate authorization for changes.
-
-See the [Codex setup](plugins/qumi-fly-bridge/deploy/CODEX-IMPORT.md) and [Claude setup](plugins/qumi-fly-bridge/deploy/CLAUDE-IMPORT.md). CLI tokens are provisioned privately using Fly auth login, a supported platform secret store, or the per-user encrypted vault.
-
-## Unified encrypted credential questions — Windows, Linux, macOS
-
-All three bridges now share the same **MCP URL-mode credential question** behavior.
-
-| Bridge | Release | Per-user credentials |
+| Plugin | First-run guide | Capabilities |
 |---|---|---|
-| [Depot](plugins/qumi-depot-bridge/README.md) | 0.5.0 | DEPOT_TOKEN, DEPOT_API_KEY, DEPOT_GIT_KEY |
-| [IONOS](plugins/qumi-ionos-bridge/README.md) | 0.2.1 | IONOS Hosting MCP PAT, optional Cloudflare MCP token |
-| [Fly](plugins/qumi-fly-bridge/README.md) | 0.2.0 | Fly CLI API token; official Fly MCP uses OAuth |
+| [DEPOT Bridge](plugins/depot-bridge/README.md) | [1–2–3 setup](plugins/depot-bridge/FIRST-RUN.md) | Depot CLI installation/discovery, build SDK, logs, evidence and optional upstream MCP |
+| [IONOS Bridge](plugins/ionos-bridge/README.md) | [1–2–3 setup](plugins/ionos-bridge/FIRST-RUN.md) | Dynamic IONOS Hosting MCP tool discovery, DNS, domains, SSL, hosting and optional Cloudflare |
+| [Fly.io Bridge](plugins/fly-io-bridge/README.md) | [1–2–3 setup](plugins/fly-io-bridge/FIRST-RUN.md) | Official Fly OAuth MCP plus agent-local flyctl install, discovery and controlled execution |
+| [NPM Bridge](plugins/npm-bridge/README.md) | [1–2–3 setup](plugins/npm-bridge/FIRST-RUN.md) | npm CLI command catalog and help, package operations and guarded registry actions |
 
-Agents invoke the bridge credential-request tool when authentication is missing. Clients supporting MCP URL elicitation display a user question linking to a secure, per-user browser input. Other clients receive a temporary secure URL fallback. **The operator types the secret only in the protected browser page, never in chat or an MCP argument.** The page encrypts its answer using one-time RSA-OAEP/AES-GCM before local submission. The bridge persists AES-256-GCM/scrypt-encrypted credentials outside Git in the user profile. Only non-secret encrypted-record fingerprints may appear in audit receipts.
+## First run: 1 → 2 → 3
 
-For remote/cloud agents, localhost on the agent host cannot be opened on the operator's machine. Use a separately deployed authenticated HTTPS credential portal or the agent platform's secret manager. Browser question styling remains controlled by Codex, Claude, or the current MCP client; the plugin cannot force identical native bubbles in every client.
+**1. Add the marketplace and install a bridge.** In Codex Settings → Plugins → Add marketplace choose:
 
-Tests validate protocol URL elicitation, encrypted browser submission, and existing CLI/MCP regression behavior under Linux. Real provider authentication and Windows/macOS manual UI tests remain pending.
+- **Source:** `https://github.com/QREWGrp/qumi-tools`
+- **Git ref:** `main`
+- **Sparse paths:** `.agents/plugins` and `plugins` (two separate lines), or leave sparse paths empty.
 
-## QUMI NPM Bridge (v0.1.0)
+The manifest is at `.agents/plugins/marketplace.json`. Select the requested bridge; no local credentials or fixed endpoints are shipped.
 
-[QUMI NPM Bridge](plugins/qumi-npm-bridge/README.md) gives Codex, Claude Code, Replit and QUMI agents access to the **locally installed npm CLI's complete advertised command catalog**, current command help, dependency inspection, package audits, installs, builds, publishing and npm administrative operations under appropriate authorization. The official [npm v11 command reference](https://docs.npmjs.com/cli/v11/commands/) is linked; the actual installed npm version is detected rather than assumed.
+**2. Answer a private credential question.** The agent identifies the required provider token and requests an MCP URL-mode **secure question**. The operator answers in an encrypted browser input—not in chat. If saving an encrypted per-user vault, choose how to manage **`VAULT_PASSPHRASE`**:
 
-For npm registry tokens, the bridge opens an MCP URL-mode secure operator question. **Session-only credential use is the default — no persistent vault.** The engineer may explicitly opt in to AES-256-GCM encrypted storage, unlocked by their passphrase in a later session. It does not bundle any credential, personal registry, or user-specific path. Mutating/npm-script-executing operations require exact-command operator review and one-time approval; secret-exporting commands are blocked.
+- **Saved Passwords:** save it in an approved browser/OS password manager; future unlocks require operator-approved autofill or re-entry. The bridge cannot retrieve saved passwords silently. Temporary localhost ports may prevent automatic manager matching.
+- **Cloud Personal Vault:** create a secret called **`VAULT_PASSPHRASE`** in this agent's own protected secrets configuration. The agent runtime reads it after secret injection; the bridge cannot directly write to an unconnected cloud vault. Never use a repository variable, chat message or plaintext file.
 
-[Codex setup](plugins/qumi-npm-bridge/deploy/CODEX-IMPORT.md) · [Claude setup](plugins/qumi-npm-bridge/deploy/CLAUDE-IMPORT.md). All four marketplace entries are declared in [the marketplace manifest](.agents/plugins/marketplace.json).
+The choice is stored only as non-secret preference metadata in the operator profile, separated by bridge and `BRIDGE_AGENT_ID`. Actual tokens remain in provider-approved secret injection or agent-local encrypted storage. **NPM defaults to session-only tokens with no vault/passphrase.**
 
-## Status and licensing
+**3. Verify and operate.** Check MCP tool discovery, installed CLI and credential-readiness status. Make a read-only provider check before builds, DNS writes, deployment or publishing; mutations require separate exact-operation approval. No bridge installation or public source push proves live provider authentication.
 
-Source-level tests have passed in local and simulated environments. GitHub repository publication does not establish authenticated Depot access or hosted MCP service availability. This repository retains its existing [MIT license](LICENSE) and its copyright notice.
+## Client support and limitations
+
+Local Node.js 20+ MCP works on Windows, Linux and macOS with authorized agent process access. Browser-based localhost questions work only when the browser and MCP server share a host; cloud agents must use their platform's protected secret manager or a deployed, authenticated HTTPS credential portal. URL-mode elicitation UI styling is owned by the client.
+
+**The repo is public but credentials are private.** No API tokens, Git keys, vault passphrases, arbitrary customer domains or personal MCP URLs are bundled. Older encrypted vault files stay in their legacy per-user locations for seamless decryption after migration; do not commit them.
+
+See [Migration and compatibility](MIGRATION.md), [Marketplace sync and updates](MARKETPLACE-SYNC.md) and [Security](SECURITY.md). The repository preserves its original MIT license and copyright notice.
+
+**Release decision:** Source-level RC; native host UI, actual password-manager interoperability, automatic workspace sync and live provider authorization require separate acceptance.

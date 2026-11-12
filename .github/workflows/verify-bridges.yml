@@ -1,21 +1,23 @@
-name: QUMI Bridge Source Tests
+name: Engineering Bridges — RC Source Tests
 on:
   push:
     branches: [main]
     paths:
-      - 'plugins/qumi-depot-bridge/**'
-      - 'plugins/qumi-ionos-bridge/**'
-      - 'plugins/qumi-fly-bridge/**'
+      - 'plugins/depot-bridge/**'
+      - 'plugins/ionos-bridge/**'
+      - 'plugins/fly-io-bridge/**'
+      - 'plugins/npm-bridge/**'
       - '.agents/plugins/marketplace.json'
       - '.github/workflows/verify-bridges.yml'
   pull_request:
     paths:
-      - 'plugins/qumi-depot-bridge/**'
-      - 'plugins/qumi-ionos-bridge/**'
-      - 'plugins/qumi-fly-bridge/**'
+      - 'plugins/depot-bridge/**'
+      - 'plugins/ionos-bridge/**'
+      - 'plugins/fly-io-bridge/**'
+      - 'plugins/npm-bridge/**'
       - '.agents/plugins/marketplace.json'
 jobs:
-  source-verification:
+  source-tests:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -24,27 +26,33 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Validate manifest and package versions
+      - name: Validate marketplace and plugin releases
+        shell: bash
         run: |
           node --input-type=module <<'JS'
           import fs from 'node:fs';
-          const items = JSON.parse(fs.readFileSync('.agents/plugins/marketplace.json','utf8')).plugins;
-          const required=['qumi-depot-bridge','qumi-ionos-bridge','qumi-fly-bridge'];
-          for (const name of required) {
-            const item=items.find(p=>p.name===name);
-            if(!item)throw new Error('Missing '+name);
-            const manifest=JSON.parse(fs.readFileSync(item.source.path+'/plugin.json','utf8'));
-            const overlay=JSON.parse(fs.readFileSync(item.source.path+'/.codex-plugin/plugin.json','utf8'));
-            if(manifest.name!==name || overlay.version!==manifest.version)throw new Error('Manifest drift for '+name);
+          const m=JSON.parse(fs.readFileSync('.agents/plugins/marketplace.json','utf8'));
+          const required=['depot-bridge','ionos-bridge','fly-io-bridge','npm-bridge'];
+          if(m.plugins.length!==4)throw Error('Expected four RC plugins');
+          for(const name of required){
+            const p=m.plugins.find(x=>x.name===name);
+            if(!p)throw Error('Missing '+name);
+            const root=p.source.path;
+            const a=JSON.parse(fs.readFileSync(root+'/plugin.json','utf8'));
+            const b=JSON.parse(fs.readFileSync(root+'/.codex-plugin/plugin.json','utf8'));
+            if(a.name!==name||a.version!=='1.0.0-rc'||b.version!==a.version)throw Error('Version/name drift '+name);
+            if(!fs.existsSync(root+'/FIRST-RUN.md'))throw Error('Missing setup '+name);
           }
           JS
-      - name: Run credential, MCP and CLI regression tests (no real credentials)
+      - name: Run simulated MCP, CLI and encrypted-question regressions
+        shell: bash
         run: |
-          set -eu
-          node plugins/qumi-depot-bridge/tests/smoke.mjs
-          node plugins/qumi-depot-bridge/tests/integration-local.mjs
-          node plugins/qumi-depot-bridge/tests/integration-v040.mjs
-          node --test plugins/qumi-depot-bridge/tests/elicitation.test.mjs plugins/qumi-depot-bridge/tests/secure-question.test.mjs
-          node plugins/qumi-ionos-bridge/tests/smoke.mjs
-          node --test plugins/qumi-ionos-bridge/tests/elicitation.test.mjs plugins/qumi-ionos-bridge/tests/secure-question.test.mjs plugins/qumi-ionos-bridge/tests/upstream.mjs
-          node --test plugins/qumi-fly-bridge/tests/elicitation.test.mjs plugins/qumi-fly-bridge/tests/secure-question.test.mjs plugins/qumi-fly-bridge/tests/runtime.test.mjs
+          set -euo pipefail
+          for bridge in depot-bridge ionos-bridge fly-io-bridge npm-bridge; do
+            (
+              cd "plugins/$bridge"
+              for suite in tests/*.mjs; do
+                node "$suite"
+              done
+            )
+          done

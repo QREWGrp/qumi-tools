@@ -1,0 +1,36 @@
+{
+  "interface": {
+    "capabilities": [],
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Inspect npm and Node versions, discover available npm commands and explain which commands need approval.",
+      "Audit a project's npm dependencies, lockfile and security report without changing project files.",
+      "Prepare an exact npm install or publish plan, request operator approval, and execute only after authorization."
+    ],
+    "developerName": "Mohammed Mansour",
+    "displayName": "NPM Bridge",
+    "longDescription": "NPM Bridge by Mohammed Mansour for Qumi Teknolojis, trading name of QROO Inc. Exposes the installed npm CLI catalog and current help dynamically to Codex, Claude, Replit, QAMAR and other authorized local MCP clients. Supports npm v11 command documentation and the commands advertised by each agent's npm binary. Provides read-only inspection plus operator-gated installation, lifecycle scripts, publishing, access changes and other potentially mutating commands. Registry authentication is per user: a cross-platform MCP URL-mode question opens a secure local browser prompt, using browser-side RSA-OAEP/AES-GCM encryption. Credential persistence is OPTIONAL: session-only is default, while encrypted AES-256-GCM/scrypt vault storage requires explicit opt-in and operator unlock. No user tokens, registry URLs, npmrc credentials or hardcoded system paths are included. npm commands execute as bounded argv arrays without an agent-controlled shell. Full remote ChatGPT web access requires separately hosted authenticated MCP, and live registry/publishing access is not included in the distributed source.",
+    "shortDescription": "npm CLI for agents",
+    "websiteURL": "https://qumi.app"
+  },
+  "name": "npm-bridge",
+  "version": "1.0.0-rc",
+  "description": "NPM Bridge: portable MCP access to the locally installed npm CLI, dynamic command discovery, exact-command approvals, secure credential questions, and optional encrypted per-user vault.",
+  "author": {
+    "name": "Mohammed Mansour",
+    "email": "mohammed@qr-oo.com"
+  },
+  "keywords": [
+    "npm",
+    "nodejs",
+    "package-manager",
+    "developer-tools",
+    "mcp",
+    "cli",
+    "secure-questions"
+  ],
+  "homepage": "https://qumi.app",
+  "repository": "https://github.com/QREWGrp/qumi-tools",
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json"
+}

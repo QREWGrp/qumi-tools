@@ -1,0 +1,37 @@
+{
+  "interface": {
+    "capabilities": [],
+    "category": "Developer Tools",
+    "defaultPrompt": [
+      "Inspect Depot builds through the MCP SDK bridge and return failing step logs, IDs, and evidence links.",
+      "Show the installed Depot CLI command catalog and inspect a subcommand before execution.",
+      "Diagnose the Windows VHost MCP connection and report missing credentials securely."
+    ],
+    "developerName": "Mohammed Mansour",
+    "displayName": "DEPOT Bridge",
+    "longDescription": "DEPOT Bridge by Mohammed Mansour for Qumi Teknolojis, trading name of QROO Inc. (https://qumi.app; https://qr-oo.com; support@qr-oo.com). Installable by Codex/Claude and Depot-hosted agents. Ships a zero-dependency local MCP server to expose CLI detection, SHA-256 verified Depot CLI installation into user or project scope, discovery of all supported CLI subcommands, guarded execution, build SDK operations when separately installed, and optional operator-configured upstream MCP. Secrets must never be entered in chat or MCP form mode. The operator-only hidden terminal encrypts tokens with AES-256-GCM and a passphrase; an unlocked agent process can use them in memory, including GIT_ASKPASS. Rotation produces a non-secret encrypted-ciphertext fingerprint receipt optionally committed to Git. Windows DPAPI remains supported. A ChatGPT web connection requires a separately hosted verified HTTPS MCP endpoint; packaging alone does not deploy one. Secure per-user credential questions use URL-mode MCP elicitation or a localhost browser fallback on Windows, Linux and macOS. The browser encrypts answers with RSA-OAEP/AES-GCM before local submission; the bridge stores AES-256-GCM ciphertext outside Git. No plaintext secret is collected through agent chat. Remote/cloud agents require an approved HTTPS credential portal or platform secret manager; URL question styling is controlled by the client.",
+    "shortDescription": "Governed Depot build access",
+    "websiteURL": "https://qumi.app"
+  },
+  "name": "depot-bridge",
+  "version": "1.0.0-rc",
+  "description": "Portable Engineering plugin: Depot CLI discovery and verified agent-local installation, SDK/MCP build tools, secure operator credential rotation, non-secret Git receipts.",
+  "author": {
+    "name": "Mohammed Mansour",
+    "email": "mohammed@qr-oo.com"
+  },
+  "keywords": [
+    "depot",
+    "mcp",
+    "devops",
+    "build-evidence",
+    "windows",
+    "secure-question",
+    "url-elicitation",
+    "cross-platform"
+  ],
+  "homepage": "https://qumi.app",
+  "repository": "https://github.com/QREWGrp/qumi-tools",
+  "skills": "./skills",
+  "mcpServers": "./.mcp.json"
+}

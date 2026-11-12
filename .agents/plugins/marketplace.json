@@ -1,14 +1,14 @@
 {
-  "name": "qumi-engineering",
+  "name": "engineering-bridges",
   "interface": {
-    "displayName": "QUMI Engineering"
+    "displayName": "Engineering Bridges"
   },
   "plugins": [
     {
-      "name": "qumi-depot-bridge",
+      "name": "depot-bridge",
       "source": {
         "source": "local",
-        "path": "./plugins/qumi-depot-bridge"
+        "path": "./plugins/depot-bridge"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -17,10 +17,10 @@
       "category": "Developer Tools"
     },
     {
-      "name": "qumi-ionos-bridge",
+      "name": "ionos-bridge",
       "source": {
         "source": "local",
-        "path": "./plugins/qumi-ionos-bridge"
+        "path": "./plugins/ionos-bridge"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -29,10 +29,10 @@
       "category": "Developer Tools"
     },
     {
-      "name": "qumi-fly-bridge",
+      "name": "fly-io-bridge",
       "source": {
         "source": "local",
-        "path": "./plugins/qumi-fly-bridge"
+        "path": "./plugins/fly-io-bridge"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -41,10 +41,10 @@
       "category": "Developer Tools"
     },
     {
-      "name": "qumi-npm-bridge",
+      "name": "npm-bridge",
       "source": {
         "source": "local",
-        "path": "./plugins/qumi-npm-bridge"
+        "path": "./plugins/npm-bridge"
       },
       "policy": {
         "installation": "AVAILABLE",
