@@ -10,7 +10,7 @@
     "start": "node standalone-mcp.mjs --stdio",
     "start:http": "node standalone-mcp.mjs --http",
     "check": "node --check index.mjs && node --check operations.mjs && node --check cli.mjs && node --check vault.mjs && node --check git.mjs && node --check upstream.mjs && node --check standalone-mcp.mjs && node --check installer.mjs && node --check portable-vault.mjs",
-    "test": "cd .. && node --test tests/elicitation.test.mjs tests/integration-installer-v040.mjs tests/integration-local.mjs tests/integration-mcp-v03.mjs tests/integration-v040.mjs tests/secure-question.test.mjs tests/smoke.mjs tests/vault-preferences.test.mjs"
+    "test": "cd .. && node --test tests/elicitation.test.mjs tests/integration-installer-v040.mjs tests/integration-local.mjs tests/integration-mcp-v03.mjs tests/integration-v040.mjs tests/secure-question.test.mjs tests/smoke.mjs tests/vault-preferences.test.mjs tests/vault-status-child-env.test.mjs"
   },
   "dependencies": {
     "@depot/sdk-node": "2.2.0",

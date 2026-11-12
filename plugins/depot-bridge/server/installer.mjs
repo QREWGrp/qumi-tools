@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {execFileSync} from 'node:child_process';
+import {sanitizedChildEnv} from './portable-vault.mjs';
 
 const API = 'https://api.github.com/repos/depot/cli/releases';
 const RELEASE_PAGE = 'https://github.com/depot/cli/releases';
@@ -89,14 +90,14 @@ function listExtracted(base){
  }}walk(base,0);if(found.length>100)throw Error('Archive contains too many files');return found;
 }
 function extract(archive,folder){
- const tar=execFileSync('tar',['-tf',archive],{encoding:'utf8',timeout:20000,maxBuffer:256*1024});
+ const tar=execFileSync('tar',['-tf',archive],{encoding:'utf8',timeout:20000,maxBuffer:256*1024,env:sanitizedChildEnv()});
  const entries=tar.split(/\r?\n/).filter(Boolean);
  if(entries.length>100||entries.some(x=>x.startsWith('/')||x.startsWith('\\')||x.split(/[\\/]/).includes('..')||x.includes(':')))throw Error('Unexpected archive paths');
- execFileSync('tar',['-xf',archive,'-C',folder],{timeout:45000,maxBuffer:16*1024});
+ execFileSync('tar',['-xf',archive,'-C',folder],{timeout:45000,maxBuffer:16*1024,env:sanitizedChildEnv()});
 }
 function ignoreWorkspaceTools(){
  const root=projectRoot();
- let gitPath=execFileSync('git',['rev-parse','--git-path','info/exclude'],{cwd:root,encoding:'utf8',timeout:8000}).trim();
+ let gitPath=execFileSync('git',['rev-parse','--git-path','info/exclude'],{cwd:root,encoding:'utf8',timeout:8000,env:sanitizedChildEnv()}).trim();
  if(!path.isAbsolute(gitPath))gitPath=path.join(root,gitPath);
  fs.mkdirSync(path.dirname(gitPath),{recursive:true});
  const previous=fs.existsSync(gitPath)?fs.readFileSync(gitPath,'utf8'):'';
