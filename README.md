@@ -71,6 +71,14 @@ For remote/cloud agents, localhost on the agent host cannot be opened on the ope
 
 Tests validate protocol URL elicitation, encrypted browser submission, and existing CLI/MCP regression behavior under Linux. Real provider authentication and Windows/macOS manual UI tests remain pending.
 
+## QUMI NPM Bridge (v0.1.0)
+
+[QUMI NPM Bridge](plugins/qumi-npm-bridge/README.md) gives Codex, Claude Code, Replit and QUMI agents access to the **locally installed npm CLI's complete advertised command catalog**, current command help, dependency inspection, package audits, installs, builds, publishing and npm administrative operations under appropriate authorization. The official [npm v11 command reference](https://docs.npmjs.com/cli/v11/commands/) is linked; the actual installed npm version is detected rather than assumed.
+
+For npm registry tokens, the bridge opens an MCP URL-mode secure operator question. **Session-only credential use is the default — no persistent vault.** The engineer may explicitly opt in to AES-256-GCM encrypted storage, unlocked by their passphrase in a later session. It does not bundle any credential, personal registry, or user-specific path. Mutating/npm-script-executing operations require exact-command operator review and one-time approval; secret-exporting commands are blocked.
+
+[Codex setup](plugins/qumi-npm-bridge/deploy/CODEX-IMPORT.md) · [Claude setup](plugins/qumi-npm-bridge/deploy/CLAUDE-IMPORT.md). All four marketplace entries are declared in [the marketplace manifest](.agents/plugins/marketplace.json).
+
 ## Status and licensing
 
 Source-level tests have passed in local and simulated environments. GitHub repository publication does not establish authenticated Depot access or hosted MCP service availability. This repository retains its existing [MIT license](LICENSE) and its copyright notice.

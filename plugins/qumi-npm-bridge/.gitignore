@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.*
+*.log
+*.npmrc
+.npmrc
+.npm/
+*.vault.json
+credentials.json
+secrets.json
+.qumi-npm-bridge/
+.qumi-tools/

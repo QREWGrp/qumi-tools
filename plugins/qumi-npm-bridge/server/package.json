@@ -1,0 +1,1 @@
+{"name":"@qumi/npm-bridge-runtime","private":true,"version":"0.1.0","type":"module","engines":{"node":">=20"},"description":"Dependency-free portable MCP runtime for installed npm CLI"}
