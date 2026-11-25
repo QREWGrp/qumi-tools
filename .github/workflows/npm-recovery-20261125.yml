@@ -1,0 +1,37 @@
+name: Public npm dependency recovery
+on:
+  push:
+    branches: [engineering/npm-recovery-20261125]
+    paths: ['.github/workflows/npm-recovery-20261125.yml']
+permissions:
+  contents: read
+jobs:
+  pack-public:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org
+      - name: Download public npm tarballs without lifecycle scripts
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/npm-recovery"
+          cd "$RUNNER_TEMP/npm-recovery"
+          npm ping --registry=https://registry.npmjs.org
+          for pkg in pnpm@12.17.0 zip-stream@7.0.5 @ai-sdk/provider@3.0.15; do
+            if ! npm view "$pkg" dist --json --registry=https://registry.npmjs.org >> registry-dist.jsonl; then
+              echo "metadata failed: $pkg" >> failures.txt
+            elif ! npm pack "$pkg" --ignore-scripts --registry=https://registry.npmjs.org; then
+              echo "pack failed: $pkg" >> failures.txt
+            fi
+          done
+          find . -maxdepth 1 -type f -name '*.tgz' -print0 | sort -z | xargs -0 -r sha256sum > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-recovery-public-packages
+          path: ${{ runner.temp }}/npm-recovery/
+          if-no-files-found: error
+          retention-days: 3
